@@ -3,5 +3,5 @@ output "bastion-ip" {
 }
 
 output "cluster-ips" {
-  value = module.server.workers-fixed-ips
+  value = module.nomad_servers.workers-fixed-ips
 }

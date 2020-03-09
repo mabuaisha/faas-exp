@@ -16,16 +16,21 @@ module "bastion" {
   network_id = module.network.network_id
 }
 
-module "server" {
-  source = "../modules/workers"
-  worker_count = 2
+module "nomad_servers" {
+  source = "../modules/nomad"
+  agent_type = "server"
+  private_key = var.private_key
+  bastion_ip = module.bastion.bastion-instance-floating-ip
+  worker_count = var.consul_size
   worker_name = var.worker_name
   worker_image = var.image
   worker_flavor = var.flavor
   network_id = module.network.network_id
+  docker_username = var.docker_username
+  docker_password = var.docker_password
   security_group_ids = [
     openstack_compute_secgroup_v2.consul_sg.name,
-    openstack_compute_secgroup_v2.nomad_sg.name
+    openstack_compute_secgroup_v2.nomad_sg.name,
+    openstack_compute_secgroup_v2.general_sg.name
   ]
-
 }

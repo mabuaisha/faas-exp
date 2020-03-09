@@ -1,11 +1,25 @@
 variable "external_network_name" {}
 
+variable "agent_type" {}
+
+variable "docker_username" {
+  default = ""
+}
+
+variable "docker_password" {
+  default = ""
+}
+
 variable worker_name {
   default = "nomad"
 }
 
 variable "public_key" {
   default = "~/.ssh/faas_ssh.pub"
+}
+
+variable "private_key" {
+  default = "~/.ssh/faas_ssh"
 }
 
 variable "env_name" {
@@ -33,4 +47,22 @@ variable "flavor" {
 
 variable "image" {
   default = "CentOS-7_6-x86_64-GenericCloud"
+}
+
+variable "datacenter" {
+  default = "dc1"
+}
+
+variable consul_version {
+  type    = string
+  default = "1.5.3"
+}
+
+variable nomad_version {
+  type    = "string"
+  default = "0.9.4"
+}
+
+variable "consul_size" {
+  default = 1
 }

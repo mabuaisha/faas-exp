@@ -2,7 +2,25 @@ variable "network_id" {}
 
 variable worker_name {}
 
+variable "agent_type" {}
+
+variable "private_key" {}
+
+variable "bastion_ip" {}
+
 variable "security_group_ids" { type    = list(string) }
+
+variable "consul_hosts" {
+  default = []
+}
+
+variable "docker_username" {
+  default = ""
+}
+
+variable "docker_password" {
+  default = ""
+}
 
 variable "env_name" {
   default = "serverless-env"
@@ -32,7 +50,20 @@ variable worker_volume_size {
   default = "40"
 }
 
-variable "bastion_ip" {
-  type = "string"
-  default = "10.239.1.113"
+variable "datacenter" {
+  default = "dc1"
+}
+
+variable consul_version {
+  type    = string
+  default = "1.5.3"
+}
+
+variable nomad_version {
+  type    = "string"
+  default = "0.9.4"
+}
+
+variable "consul_size" {
+  default = 2
 }

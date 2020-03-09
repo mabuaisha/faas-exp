@@ -1,6 +1,6 @@
 resource "openstack_compute_secgroup_v2" "consul_sg" {
   name        = "${var.env_name}-consul-sg"
-  description = "${var.env_name} - Consul Server Security Group"
+  description = "Consul Server Security Group"
 
   rule {
     // Consul RPC
@@ -77,7 +77,7 @@ resource "openstack_compute_secgroup_v2" "consul_sg" {
 
 resource "openstack_compute_secgroup_v2" "nomad_sg" {
   name        = "${var.env_name}-nomad-sg"
-  description = "${var.env_name} - Nomad Server Security Group"
+  description = "Nomad Server Security Group"
 
   rule {
     // Nomad RPC
@@ -101,6 +101,19 @@ resource "openstack_compute_secgroup_v2" "nomad_sg" {
     from_port   = "4648"
     to_port     = "4648"
     cidr        = var.subnet_cidr
+  }
+
+}
+
+resource "openstack_compute_secgroup_v2" "general_sg" {
+  description = "SSH Security Group"
+  name = "${var.env_name}-workers-sg"
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = "22"
+    to_port     = "22"
+    cidr        = var.allowed_cidr
   }
 
 }
