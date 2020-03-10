@@ -27,10 +27,27 @@ resource "openstack_compute_servergroup_v2" "server_group" {
 
 resource "openstack_compute_instance_v2" "server" {
   count             = var.worker_count
-  name              = "${var.env_name}-${var.worker_name}-${count.index}"
+  name              = "${var.env_name}-${var.agent_type}-${var.worker_name}-${count.index}"
   flavor_name       = var.worker_flavor
   image_name        = var.worker_image
   key_pair          = "${var.env_name}-keypair"
+
+  connection {
+    host                = self.network.0.fixed_ip_v4
+    agent               = "true"
+    type                = "ssh"
+    user                = "centos"
+    private_key         = file(var.private_key)
+    bastion_host        = var.bastion_ip
+    bastion_private_key = file(var.private_key)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo groupadd docker",
+      "sudo usermod -aG docker centos"
+    ]
+  }
 
   scheduler_hints {
     group             = openstack_compute_servergroup_v2.server_group.id

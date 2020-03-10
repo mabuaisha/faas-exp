@@ -65,5 +65,5 @@ variable nomad_version {
 }
 
 variable "consul_size" {
-  default = 2
+  default = 1
 }

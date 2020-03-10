@@ -1,7 +1,5 @@
 variable "external_network_name" {}
 
-variable "agent_type" {}
-
 variable "docker_username" {
   default = ""
 }
@@ -63,6 +61,10 @@ variable nomad_version {
   default = "0.9.4"
 }
 
-variable "consul_size" {
+variable "servers_count" {
   default = 1
+}
+
+variable "clients_count" {
+  default = 2
 }

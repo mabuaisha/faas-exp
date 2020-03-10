@@ -7,7 +7,7 @@ CONSUL_HOSTS=%{ for host in consul_hosts ~}"\"${host}"\", %{ endfor ~}
 
 function installPackages() {
   echo "Installing Common Packages..."
-  sudo yum install unzip -y
+  sudo yum install unzip git -y
 }
 
 function installDockerEngine() {
@@ -15,9 +15,6 @@ function installDockerEngine() {
     sudo yum install -y yum-utils device-mapper-persistent-data lvm2
     sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     sudo yum install -y docker-ce
-
-    # Add user centos to that group so that we can run docker commands
-    sudo usermod -aG docker centos
 
     # Restart the docker daemon
     sudo service docker restart
@@ -28,7 +25,14 @@ function installDockerEngine() {
 function configureDockerAccount(){
  docker login --username="${docker_username}" --password="${docker_password}" 2> /dev/null
  sudo cp /home/centos/.docker/config.json /etc/docker-auth.json
+ sudo chmod 644 /etc/docker-auth.json
 
+}
+
+function setDockerMTU(){
+    sudo sed -i "s/\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock/\/usr\/bin\/dockerd --mtu=1450 -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock/g" /usr/lib/systemd/system/docker.service
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
 }
 
 function installConsul() {
@@ -112,10 +116,10 @@ function install() {
     installNomad
 
 # Only Install Docker for client types
-%{ if server_type == "server"}
+%{ if server_type == "client"}
     installDockerEngine
     configureDockerAccount
-
+    setDockerMTU
 %{ endif }
 }
 
