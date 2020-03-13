@@ -1,31 +1,34 @@
 data "external" "cluster_token" {
-  program = ["bash", "${path.module}/scripts/generate-tokens.sh"]
+  program = [
+    "sh",
+    "${path.module}/scripts/generate-tokens.sh"]
   query = {
-    manager_host = openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]
-    bastion_host = var.bastion_ip
+    manager_host = "${openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]}"
+    bastion_host = "${var.bastion_ip}"
   }
 
-  depends_on = [openstack_compute_instance_v2.manager]
+  depends_on = [
+    null_resource.manager_config]
 }
 
 resource "openstack_compute_servergroup_v2" "server_group" {
-  name     = var.server_group
+  name = var.server_group
   policies = var.server_group_policies
 }
 
 resource "openstack_compute_instance_v2" "manager" {
   name = "${var.env_name}-manager-${var.worker_name}"
-  flavor_name       = var.server_flavor
-  image_name        = var.server_image
-  key_pair          = "${var.env_name}-keypair"
+  flavor_name = var.server_flavor
+  image_name = var.server_image
+  key_pair = "${var.env_name}-keypair"
 
   connection {
-    host                = self.network.0.fixed_ip_v4
-    agent               = "true"
-    type                = "ssh"
-    user                = "centos"
-    private_key         = file(var.private_key)
-    bastion_host        = var.bastion_ip
+    host = self.network.0.fixed_ip_v4
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+    bastion_host = var.bastion_ip
     bastion_private_key = file(var.private_key)
   }
 
@@ -39,7 +42,7 @@ resource "openstack_compute_instance_v2" "manager" {
   }
 
   scheduler_hints {
-    group             = openstack_compute_servergroup_v2.server_group.id
+    group = openstack_compute_servergroup_v2.server_group.id
   }
 
   network {
@@ -52,12 +55,12 @@ resource "openstack_compute_instance_v2" "manager" {
 
 resource "null_resource" "manager_config" {
   connection {
-    host                = openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]
-    agent               = "true"
-    type                = "ssh"
-    user                = "centos"
-    private_key         = file(var.private_key)
-    bastion_host        = var.bastion_ip
+    host = openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+    bastion_host = var.bastion_ip
     bastion_private_key = file(var.private_key)
   }
 
@@ -68,7 +71,7 @@ resource "null_resource" "manager_config" {
       docker_password = var.docker_password
     }
     )
-    destination     = "/home/centos/configure.sh"
+    destination = "/home/centos/configure.sh"
   }
 
 
@@ -90,17 +93,17 @@ resource "null_resource" "manager_config" {
 resource "openstack_compute_instance_v2" "worker" {
   count = var.worker_count
   name = "${var.env_name}-worker-${var.worker_name}-${count.index}"
-  flavor_name       = var.server_flavor
-  image_name        = var.server_image
-  key_pair          = "${var.env_name}-keypair"
+  flavor_name = var.server_flavor
+  image_name = var.server_image
+  key_pair = "${var.env_name}-keypair"
 
   connection {
-    host                = self.network.0.fixed_ip_v4
-    agent               = "true"
-    type                = "ssh"
-    user                = "centos"
-    private_key         = file(var.private_key)
-    bastion_host        = var.bastion_ip
+    host = self.network.0.fixed_ip_v4
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+    bastion_host = var.bastion_ip
     bastion_private_key = file(var.private_key)
   }
 
@@ -114,7 +117,7 @@ resource "openstack_compute_instance_v2" "worker" {
   }
 
   scheduler_hints {
-    group             = openstack_compute_servergroup_v2.server_group.id
+    group = openstack_compute_servergroup_v2.server_group.id
   }
 
   network {
@@ -127,12 +130,12 @@ resource "openstack_compute_instance_v2" "worker" {
 resource "null_resource" "worker_config" {
   count = var.worker_count
   connection {
-    host                = openstack_compute_instance_v2.worker.*.network.0.fixed_ip_v4[count.index]
-    agent               = "true"
-    type                = "ssh"
-    user                = "centos"
-    private_key         = file(var.private_key)
-    bastion_host        = var.bastion_ip
+    host = openstack_compute_instance_v2.worker.*.network.0.fixed_ip_v4[count.index]
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+    bastion_host = var.bastion_ip
     bastion_private_key = file(var.private_key)
   }
 
@@ -143,7 +146,7 @@ resource "null_resource" "worker_config" {
       docker_password = var.docker_password
     }
     )
-    destination     = "/home/centos/configure.sh"
+    destination = "/home/centos/configure.sh"
   }
 
 
@@ -156,9 +159,35 @@ resource "null_resource" "worker_config" {
 
   provisioner "remote-exec" {
     inline = [
-      "docker swarm join --token ${data.external.cluster_token.result.worker} ${openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4}:2377"
+      "docker swarm join --token ${data.external.cluster_token.result.worker} ${openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]}:2377"
     ]
   }
 
-  depends_on = [null_resource.manager_config]
+  depends_on = [
+    null_resource.manager_config]
+}
+
+resource "null_resource" "faas-service" {
+  connection {
+    host = openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+    bastion_host = var.bastion_ip
+    bastion_private_key = file(var.private_key)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "curl -sL https://cli.openfaas.com -o faas.sh",
+      "chmod +x faas.sh && ./faas.sh",
+      "sudo cp faas-cli /usr/local/bin/faas-cli",
+      "sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas",
+      "git clone https://github.com/openfaas/faas",
+      "cd faas && ./deploy_stack.sh --no-auth",
+    ]
+  }
+  depends_on = [
+    null_resource.worker_config]
 }

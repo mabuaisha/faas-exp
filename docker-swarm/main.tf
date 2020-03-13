@@ -13,6 +13,7 @@ module "bastion" {
   flavor = var.flavor
   external_network_name = var.external_network_name
   public_key = var.public_key
+  private_key = var.private_key
   network_id = module.network.network_id
 }
 

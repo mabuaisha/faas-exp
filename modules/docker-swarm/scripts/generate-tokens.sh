@@ -2,14 +2,12 @@
 
 set -e
 
+# Extract required host variables
+eval "$(jq -r '@sh "export BASTION_HOST=\(.bastion_host) MANAGER_HOST=\(.manager_host)"')"
 
-# Extract host variables
-eval "$(jq -r '@sh "MANAGER_HOST=\(.manager_host)"')"
-eval "$(jq -r '@sh "BASTION_HOST=\(.bastion_host)"')"
-
-# Get worker join token
-WORKER=$(ssh -J centos@$BASTION_HOST centos@$MANAGER_HOST -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null docker swarm join-token worker -q)
-MANAGER=$(ssh -J centos@$BASTION_HOST centos@$MANAGER_HOST -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null docker swarm join-token manager -q)
+# Extract required host worker & manager tokens
+WORKER=$(ssh -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p centos@${BASTION_HOST}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null centos@${MANAGER_HOST} "docker swarm join-token worker -q")
+MANAGER=$(ssh -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p centos@${BASTION_HOST}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null centos@${MANAGER_HOST} "docker swarm join-token manager -q")
 
 # Pass back a JSON object
 jq -n --arg worker $WORKER --arg manager $MANAGER '{"worker":$worker,"manager":$manager}'

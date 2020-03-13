@@ -12,6 +12,10 @@ resource "openstack_compute_instance_v2" "bastion" {
     openstack_compute_secgroup_v2.bastion.name,
     "default",
   ]
+
+  provisioner "local-exec" {
+    command = "ssh-add ${var.private_key}"
+  }
 }
 
 resource "openstack_compute_floatingip_associate_v2" "bastion_ip" {
