@@ -117,6 +117,11 @@ resource "null_resource" "openfaas" {
     ]
   }
 
+  provisioner "file" {
+    source = "${path.module}/scripts/deploy_openfaas.sh"
+    destination = "/home/centos/deploy_openfaas.sh"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/centos/deploy_openfaas.sh",
