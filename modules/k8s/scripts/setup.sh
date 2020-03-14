@@ -65,31 +65,26 @@ function installPackages(){
 
 function prepareKubespray(){
   git clone https://github.com/kubernetes-sigs/kubespray.git
-  cd kubespray
 
-  source ~/.bashrc
-
-  pyenv activate k8s
-
-  pip install -r requirements.txt
-
-  pyenv deactivate
-
+  pushd kubespray
+    source ~/.bashrc
+    pyenv activate k8s
+    pip install -r requirements.txt
+    pyenv deactivate
+  popd
 }
 
 function setupK8SCluster(){
   echo "Start installing cluster....."
   source ~/.bashrc
-  cd kubespray
-
-  # Enable virtualenv
-  pyenv activate k8s
-
-  # Run ansible cluster
-  ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=~/.ssh/faas_key.pem cluster.yml
-
-  # Deactivate virtualenv
-  pyenv deactivate
+  pushd kubespray
+    # Enable virtualenv
+    pyenv activate k8s
+    # Run ansible cluster
+    ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=~/.ssh/faas_key.pem cluster.yml
+    # Deactivate virtualenv
+    pyenv deactivate
+  popd
 }
 
 function deployOpenfaas(){
