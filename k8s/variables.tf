@@ -4,6 +4,8 @@ variable "docker_username" {}
 
 variable "docker_password" {}
 
+variable "docker_email" {}
+
 variable worker_name {
   default = "k8s"
 }

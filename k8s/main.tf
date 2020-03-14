@@ -26,5 +26,6 @@ module "k8s" {
   private_key = var.private_key
   docker_password = var.docker_password
   docker_username = var.docker_username
+  docker_email = var.docker_email
   security_group_ids = [openstack_compute_secgroup_v2.general_sg.name, "default"]
 }

@@ -65,7 +65,6 @@ function installPackages(){
 
 function prepareKubespray(){
   git clone https://github.com/kubernetes-sigs/kubespray.git
-
   pushd kubespray
     source ~/.bashrc
     pyenv activate k8s
@@ -87,10 +86,6 @@ function setupK8SCluster(){
   popd
 }
 
-function deployOpenfaas(){
- echo "Run OpenFaas"
-}
-
 # Install Packages
 installPackages
 
@@ -102,6 +97,3 @@ prepareKubespray
 
 # Setup cluster
 setupK8SCluster
-
-# Deploy OpenFaas
-deployOpenfaas

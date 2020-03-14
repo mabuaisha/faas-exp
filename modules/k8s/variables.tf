@@ -10,6 +10,8 @@ variable "docker_username" {}
 
 variable "docker_password" {}
 
+variable "docker_email" {}
+
 variable "security_group_ids" { type    = list(string) }
 
 variable "master_count" {

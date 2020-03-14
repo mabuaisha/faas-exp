@@ -66,16 +66,63 @@ resource "null_resource" "cluster" {
   }
 
   provisioner "file" {
-    source = "${path.module}/scripts/setup.sh"
-    destination = "/home/centos/setup.sh"
+    source = "${path.module}/scripts/setup_cluster.sh"
+    destination = "/home/centos/setup_cluster.sh"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/centos/setup.sh",
-      "/home/centos/setup.sh",
+      "chmod 400 ~/.ssh/faas_key.pem",
+      "chmod +x /home/centos/setup_cluster.sh",
+      "/home/centos/setup_cluster.sh",
     ]
   }
 
   depends_on = [openstack_compute_instance_v2.worker, openstack_compute_instance_v2.master]
+}
+
+resource "null_resource" "kubeconfig" {
+   connection {
+    host = openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4[0]
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+    bastion_host = var.bastion_ip
+    bastion_private_key = file(var.private_key)
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo cp /etc/kubernetes/admin.conf /home/centos/admin.conf",
+      "sudo chmod 640 /home/centos/admin.conf",]
+  }
+  depends_on = [null_resource.cluster]
+}
+
+resource "null_resource" "openfaas" {
+  connection {
+    host = var.bastion_ip
+    agent = "true"
+    type = "ssh"
+    user = "centos"
+    private_key = file(var.private_key)
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "export DOCKER_USERNAME=${var.docker_username}",
+      "export DOCKER_PASSWORD=${var.docker_password}",
+      "export DOCKER_EMAIL=${var.docker_email}",
+      "export MASTER_IP=${openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4[0]}"
+    ]
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/centos/deploy_openfaas.sh",
+      "/home/centos/deploy_openfaas.sh",
+    ]
+  }
+
+  depends_on = [null_resource.kubeconfig]
 }
