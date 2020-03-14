@@ -78,7 +78,18 @@ function prepareKubespray(){
 }
 
 function setupK8SCluster(){
-  echo "Run cluster"
+  echo "Start installing cluster....."
+  source ~/.bashrc
+  cd kubespray
+
+  # Enable virtualenv
+  pyenv activate k8s
+
+  # Run ansible cluster
+  ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=~/.ssh/faas_key.pem cluster.yml
+
+  # Deactivate virtualenv
+  pyenv deactivate
 }
 
 function deployOpenfaas(){

@@ -41,13 +41,18 @@ resource "openstack_compute_instance_v2" "worker" {
 
 }
 
-resource "null_resource" "inventory" {
+resource "null_resource" "cluster" {
   connection {
     host = var.bastion_ip
     agent = "true"
     type = "ssh"
     user = "centos"
     private_key = file(var.private_key)
+  }
+
+  provisioner "file" {
+    source = var.private_key
+    destination = "~/.ssh/faas_key.pem"
   }
 
   provisioner "file" {
@@ -60,28 +65,17 @@ resource "null_resource" "inventory" {
     destination     = "/home/centos/inventory.yml"
   }
 
+  provisioner "file" {
+    source = "${path.module}/scripts/setup.sh"
+    destination = "/home/centos/setup.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/centos/setup.sh",
+      "/home/centos/setup.sh",
+    ]
+  }
+
   depends_on = [openstack_compute_instance_v2.worker, openstack_compute_instance_v2.master]
-
 }
-
-//resource "null_resource" "cluster" {
-//  connection {
-//    host = var.bastion_ip
-//    agent = "true"
-//    type = "ssh"
-//    user = "centos"
-//    private_key = file(var.private_key)
-//  }
-//
-//  provisioner "file" {
-//    source = "${path.module}/scripts/setup.sh"
-//    destination = "/home/centos/setup.sh"
-//  }
-//
-//  provisioner "remote-exec" {
-//    inline = [
-//      "chmod +x /home/centos/setup.sh",
-//      "/home/centos/setup.sh",
-//    ]
-//  }
-//}
