@@ -1,11 +1,19 @@
 variable "external_network_name" {}
 
+variable "docker_username" {}
+
+variable "docker_password" {}
+
 variable worker_name {
   default = "k8s"
 }
 
 variable "public_key" {
   default = "~/.ssh/faas_ssh.pub"
+}
+
+variable "private_key" {
+  default = "~/.ssh/faas_ssh"
 }
 
 variable "env_name" {
