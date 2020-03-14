@@ -9,7 +9,7 @@ resource "null_resource" "cluster" {
 
   provisioner "file" {
     source = "${path.module}/scripts/setup.sh"
-    destination = "/home/centos"
+    destination = "/home/centos/setup.sh"
   }
 
   provisioner "remote-exec" {
