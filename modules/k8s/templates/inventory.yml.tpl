@@ -1,39 +1,39 @@
 all:
   hosts:
-  %{ for index, ip in worker_ips ~}
+  %{ for index, ip in worker_ips}
     node${index}:
       ansible_host: ${ip}
       ip: ${ip}
       access_ip: ${ip}
-  %{ endfor ~}
-  %{ for index, ip in master_ips ~}
+  %{ endfor}
+  %{ for index, ip in master_ips}
     master${index}:
       ansible_host: ${ip}
       ip: ${ip}
       access_ip: ${ip}
-  %{ endfor ~}
+  %{ endfor}
   children:
     kube-master:
       hosts:
-      %{ for index, ip in master_ips ~}
+      %{ for index, ip in master_ips}
         master${index}:
           ansible_host: ${ip}
           ip: ${ip}
           access_ip: ${ip}
-      %{ endfor ~}
+      %{ endfor}
     kube-node:
       hosts:
-      %{ for index, ip in worker_ips ~}
+      %{ for index, ip in worker_ips}
         node${index}:
-      %{ endfor ~}
+      %{ endfor}
     etcd:
       hosts:
-      %{ for index, ip in master_ips ~}
+      %{ for index, ip in master_ips}
         master${index}:
           ansible_host: ${ip}
           ip: ${ip}
           access_ip: ${ip}
-      %{ endfor ~}
+      %{ endfor}
     k8s-cluster:
       children:
         kube-master:
