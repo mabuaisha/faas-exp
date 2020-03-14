@@ -21,9 +21,13 @@ function deployOpenFaas(){
 
  helm repo add openfaas https://openfaas.github.io/faas-netes/
 
+ helm repo update \
+ && helm upgrade openfaas --install openfaas/openfaas \
+    --namespace openfaas  \
+    --set functionNamespace=openfaas-fn \
+    --set generateBasicAuth=true
+
  PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)
- export OPENFAAS_PASSWORD=$PASSWORD
- echo "OpenFaaS admin password: $PASSWORD"
 }
 
 configureKubectl

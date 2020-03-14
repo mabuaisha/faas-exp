@@ -94,6 +94,7 @@ resource "null_resource" "kubeconfig" {
   provisioner "remote-exec" {
     inline = [
       "sudo cp /etc/kubernetes/admin.conf /home/centos/admin.conf",
+      "suod chown centos. /home/centos/admin.conf",
       "sudo chmod 640 /home/centos/admin.conf",]
   }
   depends_on = [null_resource.cluster]
@@ -108,18 +109,16 @@ resource "null_resource" "openfaas" {
     private_key = file(var.private_key)
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "export DOCKER_USERNAME=${var.docker_username}",
-      "export DOCKER_PASSWORD=${var.docker_password}",
-      "export DOCKER_EMAIL=${var.docker_email}",
-      "export MASTER_IP=${openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4[0]}"
-    ]
-  }
-
   provisioner "file" {
-    source = "${path.module}/scripts/deploy_openfaas.sh"
-    destination = "/home/centos/deploy_openfaas.sh"
+    content = templatefile("${path.module}/templates/deploy_openfaas.sh.tpl",
+    {
+      DOCKER_USERNAME = var.docker_username
+      DOCKER_PASSWORD = var.docker_password
+      DOCKER_EMAIL = var.docker_email
+      MASTER_IP = openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4[0]
+    }
+    )
+    destination     = "/home/centos/deploy_openfaas.sh"
   }
 
   provisioner "remote-exec" {
