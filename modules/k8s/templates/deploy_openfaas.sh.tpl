@@ -2,6 +2,10 @@
 
 set -e
 
+export MASTER_IP=${MASTER_IP}
+export DOCKER_USERNAME=${DOCKER_USERNAME}
+export DOCKER_PASSWORD=${DOCKER_PASSWORD}
+export DOCKER_EMAIL=${DOCKER_EMAIL}
 
 function configureKubectl(){
  scp -i ~/.ssh/faas_key.pem -o StrictHostKeyChecking=no centos@$MASTER_IP:/home/centos/admin.conf kubespray-do.conf
@@ -28,6 +32,8 @@ function deployOpenFaas(){
     --set generateBasicAuth=true
 
  PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)
+
+ echo "OpenFaaS admin password: $PASSWORD"
 }
 
 configureKubectl
