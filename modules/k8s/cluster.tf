@@ -18,7 +18,7 @@ resource "openstack_compute_instance_v2" "master" {
     uuid = var.network_id
   }
 
-  security_groups = [var.security_group_ids]
+  security_groups = var.security_group_ids
 
 }
 
@@ -37,7 +37,7 @@ resource "openstack_compute_instance_v2" "worker" {
     uuid = var.network_id
   }
 
-  security_groups = [var.security_group_ids]
+  security_groups = var.security_group_ids
 
 }
 
