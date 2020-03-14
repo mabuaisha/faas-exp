@@ -11,13 +11,17 @@ function setupVirtualenv(){
  echo 'eval "$(pyenv init -)"'  >> ~/.bashrc
  echo 'eval "$(pyenv virtualenv-init -)"'  >> ~/.bashrc
 
+ echo "Source bashrc"
  source ~/.bashrc
 
- exec $SHELL
-
  # Setup pyenv
+ echo "Setup Pyenv is done !!!"
  pyenv --version
+
+ echo "Install python version 3.7.0"
  pyenv install 3.7.0
+
+ echo "Create virtualenv called k8s"
  pyenv virtualenv 3.7.0 k8s
 
 }
