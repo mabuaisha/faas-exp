@@ -94,7 +94,7 @@ resource "null_resource" "kubeconfig" {
   provisioner "remote-exec" {
     inline = [
       "sudo cp /etc/kubernetes/admin.conf /home/centos/admin.conf",
-      "suod chown centos. /home/centos/admin.conf",
+      "sudo chown centos. /home/centos/admin.conf",
       "sudo chmod 640 /home/centos/admin.conf",]
   }
   depends_on = [null_resource.cluster]
@@ -124,7 +124,7 @@ resource "null_resource" "openfaas" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /home/centos/deploy_openfaas.sh",
-      "/home/centos/deploy_openfaas.sh",
+      "source /home/centos/deploy_openfaas.sh",
     ]
   }
 
