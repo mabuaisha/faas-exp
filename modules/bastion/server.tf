@@ -38,9 +38,10 @@ resource "null_resource" "bastion_packages" {
   provisioner "remote-exec" {
     inline = [
       "echo Installing Docker...",
-      "sudo yum install -y yum-utils device-mapper-persistent-data lvm2",
+      "sudo yum install -y yum-utils device-mapper-persistent-data lvm2 git",
       "sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo",
-      "sudo yum install -y docker-ce",
+      "sudo yum install -y docker-ce-19.03.5-3.el7",
+      "sudo usermod -aG docker centos",
       "sudo service docker restart",
       "sudo docker --version",
       "curl -sL https://cli.openfaas.com -o faas.sh",
