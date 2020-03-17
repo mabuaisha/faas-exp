@@ -4,6 +4,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   image_name        = var.image
   key_pair          = openstack_compute_keypair_v2.terraform.name
 
+
   network {
     uuid = var.network_id
   }
@@ -12,6 +13,27 @@ resource "openstack_compute_instance_v2" "bastion" {
     openstack_compute_secgroup_v2.bastion.name,
     "default",
   ]
+
+  provisioner "local-exec" {
+    command = "ssh-add ${var.private_key}"
+  }
+}
+
+resource "openstack_compute_floatingip_associate_v2" "bastion_ip" {
+  floating_ip = openstack_networking_floatingip_v2.bastion_ip.address
+  instance_id = openstack_compute_instance_v2.bastion.id
+  fixed_ip    = openstack_compute_instance_v2.bastion.network.0.fixed_ip_v4
+}
+
+resource "null_resource" "bastion_packages" {
+
+  connection {
+    host                = openstack_networking_floatingip_v2.bastion_ip.address
+    agent               = "true"
+    type                = "ssh"
+    user                = "centos"
+    private_key         = file(var.private_key)
+  }
 
   provisioner "remote-exec" {
     inline = [
@@ -28,15 +50,9 @@ resource "openstack_compute_instance_v2" "bastion" {
     ]
   }
 
-
-  provisioner "local-exec" {
-    command = "ssh-add ${var.private_key}"
-  }
-}
-
-resource "openstack_compute_floatingip_associate_v2" "bastion_ip" {
-  floating_ip = openstack_networking_floatingip_v2.bastion_ip.address
-  instance_id = openstack_compute_instance_v2.bastion.id
-  fixed_ip    = openstack_compute_instance_v2.bastion.network.0.fixed_ip_v4
+  depends_on = [
+    openstack_compute_floatingip_associate_v2.bastion_ip,
+    openstack_compute_instance_v2.bastion,
+  ]
 }
 
