@@ -180,10 +180,6 @@ resource "null_resource" "faas-service" {
 
   provisioner "remote-exec" {
     inline = [
-      "curl -sL https://cli.openfaas.com -o faas.sh",
-      "chmod +x faas.sh && ./faas.sh",
-      "sudo cp faas-cli /usr/local/bin/faas-cli",
-      "sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas",
       "git clone https://github.com/openfaas/faas",
       "cd faas && ./deploy_stack.sh --no-auth",
     ]

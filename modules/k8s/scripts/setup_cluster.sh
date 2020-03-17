@@ -59,7 +59,7 @@ function installPackages(){
 
    setupKubectl
 
-   setupOpenfaas
+   #setupOpenfaas
 
 }
 

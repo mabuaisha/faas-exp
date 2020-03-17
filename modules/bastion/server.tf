@@ -13,6 +13,22 @@ resource "openstack_compute_instance_v2" "bastion" {
     "default",
   ]
 
+  provisioner "remote-exec" {
+    inline = [
+      "echo Installing Docker...",
+      "sudo yum install -y yum-utils device-mapper-persistent-data lvm2",
+      "sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo",
+      "sudo yum install -y docker-ce",
+      "sudo service docker restart",
+      "sudo docker --version",
+      "curl -sL https://cli.openfaas.com -o faas.sh",
+      "chmod +x faas.sh && ./faas.sh",
+      "sudo cp faas-cli /usr/local/bin/faas-cli",
+      "sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas",
+    ]
+  }
+
+
   provisioner "local-exec" {
     command = "ssh-add ${var.private_key}"
   }
