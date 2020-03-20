@@ -64,9 +64,8 @@ function installPackages(){
 }
 
 function prepareKubespray(){
-  git clone https://github.com/kubernetes-sigs/kubespray.git
+  git clone https://github.com/mabuaisha/kubespray.git
   pushd kubespray
-    git checkout v2.11.2
     source ~/.bashrc
     pyenv activate k8s
     pip install -r requirements.txt
