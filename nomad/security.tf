@@ -116,4 +116,31 @@ resource "openstack_compute_secgroup_v2" "general_sg" {
     cidr        = var.allowed_cidr
   }
 
+  rule {
+    ip_protocol = "tcp"
+    from_port   = "80"
+    to_port     = "80"
+    cidr        = var.allowed_cidr
+  }
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = "8080"
+    to_port     = "8080"
+    cidr        = var.allowed_cidr
+  }
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = "3000"
+    to_port     = "3000"
+    cidr        = var.allowed_cidr
+  }
+
+  rule {
+    from_port   = -1
+    to_port     = -1
+    ip_protocol = "icmp"
+    cidr        = "0.0.0.0/0"
+  }
 }

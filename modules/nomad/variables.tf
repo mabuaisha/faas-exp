@@ -61,7 +61,7 @@ variable consul_version {
 
 variable nomad_version {
   type    = "string"
-  default = "0.9.4"
+  default = "0.10.2"
 }
 
 variable "consul_size" {
