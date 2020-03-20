@@ -1,13 +1,12 @@
 version: 1.0
 provider:
   name: openfaas
-  gateway: http://127.0.0.1:8080
+  gateway: http://127.0.0.1:31112
 functions:
   gofunction:
     lang: go
     handler: ./gofunction
-    image: mabuaisha/gofunction
-    # Relevant only for k8s
+    image: mabuaisha/gofunction:latest
+# Only relevant for K8S
 #    secrets:
 #      - dockerhub
-
