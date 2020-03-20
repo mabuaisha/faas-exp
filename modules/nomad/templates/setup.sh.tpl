@@ -14,7 +14,7 @@ function installDockerEngine() {
     echo "Installing Docker..."
     sudo yum install -y yum-utils device-mapper-persistent-data lvm2
     sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    sudo yum install -y docker-ce-19.03.5-3.el7
+    sudo yum install -y docker-ce-19.03.7-3.el7
 
     # Restart the docker daemon
     sudo service docker restart

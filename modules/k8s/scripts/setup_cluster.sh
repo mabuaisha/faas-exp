@@ -66,6 +66,7 @@ function installPackages(){
 function prepareKubespray(){
   git clone https://github.com/kubernetes-sigs/kubespray.git
   pushd kubespray
+    git checkout v2.11.2
     source ~/.bashrc
     pyenv activate k8s
     pip install -r requirements.txt
@@ -80,7 +81,7 @@ function setupK8SCluster(){
     # Enable virtualenv
     pyenv activate k8s
     # Run ansible cluster
-    ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=~/.ssh/faas_key.pem cluster.yml
+    ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=~/.ssh/faas_key.pem cluster.yml -e docker_version=19.03
     # Deactivate virtualenv
     pyenv deactivate
   popd
