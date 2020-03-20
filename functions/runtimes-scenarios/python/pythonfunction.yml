@@ -3,10 +3,12 @@ provider:
   name: openfaas
   gateway: http://127.0.0.1:31112
 functions:
-  gofunction:
-    lang: go
-    handler: ./gofunction
+  pythonfunction:
+    lang: python3
+    handler: ./pythonfunction
     image: mabuaisha/gofunction:latest
 # Only relevant for K8S
     secrets:
       - dockerhub
+
+
