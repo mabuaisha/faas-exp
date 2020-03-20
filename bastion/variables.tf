@@ -1,7 +1,5 @@
 variable "external_network_name" {}
 
-variable "network_id" {}
-
 variable "public_key" {
   default = "~/.ssh/faas_ssh.pub"
 }
