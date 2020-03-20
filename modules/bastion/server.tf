@@ -35,10 +35,10 @@ resource "null_resource" "bastion_packages" {
     private_key         = file(var.private_key)
   }
 
- provisioner "file" {
+  provisioner "file" {
    source = "${path.module}/scripts/setup_bastion.sh"
    destination = "/home/centos/setup_bastion.sh"
- }
+  }
 
   provisioner "remote-exec" {
     inline = [

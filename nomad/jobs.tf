@@ -5,7 +5,7 @@ resource "null_resource" "nomad_jobs" {
     type                = "ssh"
     user                = "centos"
     private_key         = file(var.private_key)
-    bastion_host        = module.bastion.bastion-instance-floating-ip
+    bastion_host        = var.bastion_ip
     bastion_private_key = file(var.private_key)
   }
 
@@ -19,7 +19,6 @@ resource "null_resource" "nomad_jobs" {
   }
 
   depends_on = [
-    module.bastion,
     module.nomad_servers,
     module.nomad_clients,
   ]

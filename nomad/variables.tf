@@ -1,5 +1,9 @@
 variable "external_network_name" {}
 
+variable "bastion_ip" {}
+
+variable "network_id" {}
+
 variable "docker_username" {
   default = ""
 }
