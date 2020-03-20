@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  # This can be override upon request/need
+  gateway: http://127.0.0.1:8080
+functions:
+  nodefunction:
+    lang: node12
+    handler: ./nodefunction
+    image: mabuaisha/nodefunction:latest

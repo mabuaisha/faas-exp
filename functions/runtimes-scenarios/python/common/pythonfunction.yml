@@ -1,0 +1,12 @@
+version: 1.0
+provider:
+  name: openfaas
+  # This can be override upon request/need
+  gateway: http://127.0.0.1:8080
+functions:
+  pythonfunction:
+    lang: python3
+    handler: ./pythonfunction
+    image: mabuaisha/pythonfunction:latest
+
+

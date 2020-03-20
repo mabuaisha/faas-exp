@@ -1,12 +1,10 @@
 version: 1.0
 provider:
   name: openfaas
-  gateway: http://127.0.0.1:31112
+  # This can be override upon request/need
+  gateway: http://127.0.0.1:8080
 functions:
   javafunction:
     lang: java8
     handler: ./javafunction
     image: mabuaisha/javafunction:latest
-# Only relevant for K8S
-    secrets:
-      - dockerhub
