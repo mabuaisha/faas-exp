@@ -10,7 +10,9 @@ module.exports = (event, context) => {
   const a = Matrix.create(param, param);
   const b = Matrix.create(param, param);
   const resultBig = Matrix.multiply(a, b);
-  const result = Matrix.subset(resultBig, 0, 0, 10, 10);
+  const result = {
+    'result': Matrix.subset(resultBig, 0, 0, 10, 10)
+  };
 
   return context
     .status(200)
