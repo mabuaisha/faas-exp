@@ -9,8 +9,10 @@ module.exports = async (event, context) => {
     flags: 'a' // 'a' means appending (old data will be preserved)
   });
 
-
-  const result = {'result': 'test'};
+  writer.write(event['body']);
+  let buffer = fs.readFileSync('/tmp/log.txt');
+  console.log(buffer.toString());
+  const result = buffer.toString();
   return context
     .status(200)
     .succeed(result)
