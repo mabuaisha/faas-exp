@@ -6,5 +6,5 @@ provider:
 functions:
   matrixfunction:
     lang: node12
-    handler: ./matrixfunction
+    handler: ./matrixfunction/handler.js
     image: mabuaisha/matrixfunction:latest
