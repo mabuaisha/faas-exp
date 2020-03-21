@@ -8,3 +8,5 @@ functions:
     lang: node12
     handler: ./matrixfunction
     image: mabuaisha/matrixfunction:latest
+    environment:
+      write_debug: true
