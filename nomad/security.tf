@@ -138,6 +138,13 @@ resource "openstack_compute_secgroup_v2" "general_sg" {
   }
 
   rule {
+    ip_protocol = "tcp"
+    from_port   = "9090"
+    to_port     = "9090"
+    cidr        = var.allowed_cidr
+  }
+
+  rule {
     from_port   = -1
     to_port     = -1
     ip_protocol = "icmp"
