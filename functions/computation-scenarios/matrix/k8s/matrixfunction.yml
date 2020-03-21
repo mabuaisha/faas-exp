@@ -1,0 +1,14 @@
+version: 1.0
+provider:
+  name: openfaas
+  # The ip should be changed
+  # The port 31112 is only applied for k8s
+  gateway: http://127.0.0.1:31112
+functions:
+  matrixfunction:
+    lang: node12
+    handler: ./matrixfunction
+    image: mabuaisha/matrixfunction:latest
+# Only relevant for K8S
+    secrets:
+      - dockerhub
