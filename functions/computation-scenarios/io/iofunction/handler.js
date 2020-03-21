@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 
-module.exports = async (event, context) => {
+module.exports = (event, context) => {
   console.log(event);
   console.log(context);
   let writer = fs.createWriteStream('/tmp/log.txt', {
@@ -10,8 +10,11 @@ module.exports = async (event, context) => {
   });
 
   writer.write(event['body']);
+  let buffer = fs.readFileSync('/tmp/log.txt');
+  console.log(buffer.toString());
+  const result = buffer.toString();
   return context
     .status(200)
-    .succeed({'result': 'Write done'})
+    .succeed(result)
 }
 
