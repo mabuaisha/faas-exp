@@ -8,4 +8,6 @@ functions:
     lang: node12
     handler: ./fibfunction
     image: mabuaisha/fibfunction:latest
+    environment:
+      write_debug: true
 

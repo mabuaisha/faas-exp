@@ -2,11 +2,14 @@
 
 module.exports = (event, context) => {
   let number = event['body'];
+  number = number.replace(/\n/g, '');
+  console.log(event);
+  console.log(context);
 
     if (!number || !isNumeric(number)) {
         return context
             .status(400)
-            .failed(createErrorResponse("Please pass a valid number 'number'."));
+            .fail(createErrorResponse("Please pass a valid number 'number'."));
     }
 
     number = parseInt(number);
