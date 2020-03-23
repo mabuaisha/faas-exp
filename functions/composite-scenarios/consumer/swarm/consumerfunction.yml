@@ -1,0 +1,13 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+  consumerfunction:
+    lang: node12
+    handler: ./consumerfunction
+    image: consumerfunction:latest
+    environment:
+      write_debug: true
+      gateway_endpoint: http://gateway:8080
+
