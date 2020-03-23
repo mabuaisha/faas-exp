@@ -18,7 +18,7 @@ module.exports = (event, context) => {
   // This call to a matrix function
   const url = gateway_endpoint + "/function/matrixfunction?param=" + param;
   let result = '';
-  request.get(url, (error, response, body) => {
+  request.post(url, (error, response, body) => {
     result = JSON.parse(body);
     console.log(result);
   });
