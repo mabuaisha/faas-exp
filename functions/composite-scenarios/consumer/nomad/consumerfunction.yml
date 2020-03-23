@@ -6,7 +6,7 @@ functions:
   consumerfunction:
     lang: node12
     handler: ./consumerfunction
-    image: consumerfunction:latest
+    image: mabuaisha/consumerfunction:latest
     environment:
       write_debug: true
       gateway_endpoint: http://YOUR_LB_IP:8080
