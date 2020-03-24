@@ -9,5 +9,8 @@ functions:
     image: mabuaisha/ftpfunction:latest
     environment:
       write_debug: true
+      ftp_host: YOUR_IP_FTP_SERVER
+      ftp_user: YOUR_FTP_USER_NAME
+      ftp_password: YOUR_FTP_PASSWORD
 
 
