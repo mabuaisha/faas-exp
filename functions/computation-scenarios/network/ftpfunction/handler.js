@@ -18,29 +18,26 @@ module.exports = async (event, context) => {
       return context.status.fail('ftp Password is missing')
   }
 
-  console.log(event);
-  console.log(context);
-  console.log(ftpHost);
-  console.log(ftpUser);
-  console.log(ftpPassword);
-
+  let result = {};
   let ftpResult = await ftpHandler(ftpHost, ftpUser, ftpPassword);
-  let statusCode = 400;
-  let message = 'Error on downloading file';
-  if (ftpResult) {
-      statusCode = 22;
-      message = 'Download succuessfully passed';
+  let statusCode = 200;
+  if (!ftpResult) {
+      statusCode = 400;
+      ftpResult = 'Error on downloading file from FTP'
+      result['error'] = ftpResult
+  } else{
+      result['text'] = ftpResult;
   }
 
   return context
     .status(statusCode)
-    .succeed({'message': message})
+    .succeed({'result': result})
 
 }
 
 
 async function ftpHandler(host, user, password) {
-    let succeed = false;
+    let result = null;
     const client = new ftp.Client();
     client.ftp.verbose = true;
     try {
@@ -49,16 +46,16 @@ async function ftpHandler(host, user, password) {
             user: user,
             password: password,
         });
-        console.log(await client.list());
-         let writer = fs.createWriteStream('/tmp/log.txt', {
-            flags: 'a' // 'a' means appending (old data will be preserved)
+         let writer = fs.createWriteStream('/tmp/test.txt', {
+            flags: 'w' // 'a' means appending (old data will be preserved)
           });
         await client.downloadTo(writer, "test.txt");
-        succeed = true;
+        let buffer = fs.readFileSync('/tmp/test.txt');
+        result = buffer.toString();
     }
     catch(err) {
         console.log(err)
     }
     client.close();
-    return succeed;
+    return result;
 }
