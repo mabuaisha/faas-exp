@@ -10,6 +10,7 @@
   "author": "OpenFaaS Ltd",
   "license": "MIT",
   "dependencies": {
-    "basic-ftp": "^4.5.4"
+    "basic-ftp": "^4.5.4",
+    "fs": "0.0.1-security"
   }
 }
