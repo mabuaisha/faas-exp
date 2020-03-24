@@ -1,5 +1,6 @@
 'use strict'
 const ftp = require("basic-ftp");
+const fs = require('fs');
 
 module.exports = async (event, context) => {
 
@@ -16,6 +17,12 @@ module.exports = async (event, context) => {
   if (!ftpPassword) {
       return context.status.fail('ftp Password is missing')
   }
+
+  console.log(event);
+  console.log(context);
+  console.log(ftpHost);
+  console.log(ftpUser);
+  console.log(ftpPassword);
 
   let ftpResult = await ftpHandler(ftpHost, ftpUser, ftpPassword);
   let statusCode = 400;
@@ -41,10 +48,12 @@ async function ftpHandler(host, user, password) {
             host: host,
             user: user,
             password: password,
-            secure: true
         });
         console.log(await client.list());
-        await client.downloadTo("/tmp/test.txt", "test.txt");
+         let writer = fs.createWriteStream('/tmp/log.txt', {
+            flags: 'a' // 'a' means appending (old data will be preserved)
+          });
+        await client.downloadTo(writer, "test.txt");
         succeed = true;
     }
     catch(err) {
