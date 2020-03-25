@@ -34,7 +34,7 @@ resource "null_resource" "ftp_packages" {
 
   provisioner "file" {
 
-    content = templatefile("${path.module}/templates/setup_ftp.sh",
+    content = templatefile("${path.module}/templates/setup_ftp.sh.tpl",
     {
       docker_username = var.ftp_username
       docker_password = var.ftp_password
