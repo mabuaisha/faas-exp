@@ -16,10 +16,6 @@ variable worker_name {
   default = "nomad"
 }
 
-variable "public_key" {
-  default = "~/.ssh/faas_ssh.pub"
-}
-
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
 }

@@ -3,10 +3,6 @@ variable "network_id" {}
 variable "ftp_username" {}
 variable "ftp_password" {}
 
-variable "public_key" {
-  default = "~/.ssh/faas_ssh.pub"
-}
-
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
 }

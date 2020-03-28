@@ -12,10 +12,6 @@ variable worker_name {
   default = "docker-swarm"
 }
 
-variable "public_key" {
-  default = "~/.ssh/faas_ssh.pub"
-}
-
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
 }

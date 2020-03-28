@@ -14,10 +14,6 @@ variable worker_name {
   default = "k8s"
 }
 
-variable "public_key" {
-  default = "~/.ssh/faas_ssh.pub"
-}
-
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
 }
