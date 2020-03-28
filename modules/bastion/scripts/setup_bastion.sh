@@ -2,6 +2,8 @@
 
 set -e
 
+# Activate ssh agent process
+eval "$(ssh-agent -s)"
 
 # Install required packages including docker, git, ab
 echo "Installing Docker..."
@@ -9,6 +11,12 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2 git
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 sudo yum install -y docker-ce-19.03.7-3.el7
 sudo yum install -y httpd-tools
+sudo yum install -y unzip
+
+# Install and configure terraform in bastion host
+curl https://releases.hashicorp.com/terraform/0.12.21/terraform_0.12.21_linux_386.zip -o terraform.zip
+unzip terraform.zip
+sudo mv terraform /usr/local/bin/
 
 # Config docker
 sudo usermod -aG docker centos

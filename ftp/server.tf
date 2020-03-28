@@ -36,8 +36,8 @@ resource "null_resource" "ftp_packages" {
 
     content = templatefile("${path.module}/templates/setup_ftp.sh.tpl",
     {
-      docker_username = var.ftp_username
-      docker_password = var.ftp_password
+      ftp_username = var.ftp_username
+      ftp_password = var.ftp_password
     }
     )
     destination = "/home/centos/setup_ftp.sh"
