@@ -25,7 +25,7 @@ job "faas-idler" {
         image = "openfaas/faas-idler:0.3.0"
          args = [
           "/home/app/faas-idler",
-          "-dry-run=true",
+          "-dry-run=false",
         ]
       }
 
@@ -47,7 +47,7 @@ job "faas-idler" {
         prometheus_host = "192.168.0.26"
         # This port should be opened before running this job
         prometheus_port = "9090"
-        inactivity_duration = "30m"
+        inactivity_duration = "10m"
         reconcile_interval = "2m"
       }
 

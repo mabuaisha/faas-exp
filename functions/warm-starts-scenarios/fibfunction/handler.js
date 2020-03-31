@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = (event, context) => {
+module.exports = async (event, context) => {
   let number = event['body'];
   number = number.replace(/\n/g, '');
   console.log(event);
@@ -12,8 +12,8 @@ module.exports = (event, context) => {
             .fail(createErrorResponse("Please pass a valid number 'number'."));
     }
 
-    number = parseInt(number);
-    const result = fib(number);
+    number = await parseInt(number);
+    const result = await fib(number);
 
   return context
     .status(200)

@@ -53,12 +53,12 @@ variable "datacenter" {
 
 variable consul_version {
   type    = string
-  default = "1.5.3"
+  default = "1.2.0"
 }
 
 variable nomad_version {
   type    = "string"
-  default = "0.10.2"
+  default = "0.8.4"
 }
 
 variable "servers_count" {

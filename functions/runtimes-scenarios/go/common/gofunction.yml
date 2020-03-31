@@ -8,3 +8,10 @@ functions:
     lang: go
     handler: ./gofunction
     image: mabuaisha/gofunction:latest
+    labels:
+      com.openfaas.scale.min: 5
+      com.openfaas.scale.max: 5
+      # Relevant for nomad bug, does not update the min as 5
+      com.openfaas.scale.factor: 100
+    environment:
+      write_debug: true

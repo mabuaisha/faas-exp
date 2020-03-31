@@ -2,18 +2,15 @@ version: 1.0
 provider:
   name: openfaas
   # This can be override upon request/need
-  gateway: http://127.0.0.1:8080
+  gateway: http://192.168.0.26:8080
 functions:
-  fibfunction:
+  nomadfunction:
     lang: node12
-    handler: ./fibfunction
-    image: mabuaisha/fibfunction:latest
+    handler: ./nomadfunction
+    image: mabuaisha/nomadfunction:latest
     labels:
-      datacenters: "dc1"
       com.openfaas.scale.min: 5
       com.openfaas.scale.max: 5
-      # Relevant only for nomad
       com.openfaas.scale.factor: 100
     environment:
       write_debug: true
-
