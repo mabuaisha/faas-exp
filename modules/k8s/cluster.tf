@@ -55,6 +55,10 @@ resource "null_resource" "cluster" {
     destination = "/home/centos/faas_key.pem"
   }
 
+  provisioner "remote-exec" {
+    inline = ['chmod 400 /home/centos/faas_key.pem']
+  }
+
   provisioner "file" {
     content = templatefile("${path.module}/templates/inventory.yml.tpl",
     {
