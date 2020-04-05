@@ -182,6 +182,8 @@ resource "null_resource" "faas-service" {
     inline = [
       "git clone https://github.com/openfaas/faas",
       "cd faas && ./deploy_stack.sh --no-auth",
+      "curl https://raw.githubusercontent.com/openfaas-incubator/faas-idler/master/docker-compose.yml -o faas-idler.yml",
+      "docker stack deploy func -c faas-idler.yml"
     ]
   }
   depends_on = [
