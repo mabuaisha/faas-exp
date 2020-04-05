@@ -29,7 +29,7 @@ function deployOpenFaas(){
  && helm upgrade openfaas --install openfaas/openfaas \
     --namespace openfaas  \
     --set functionNamespace=openfaas-fn \
-    --set generateBasicAuth=false \
+    --set generateBasicAuth=true \
     --set faasIdler.dryRun=false
 
  PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)
