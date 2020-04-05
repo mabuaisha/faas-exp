@@ -56,7 +56,7 @@ resource "null_resource" "cluster" {
   }
 
   provisioner "remote-exec" {
-    inline = ['chmod 400 /home/centos/faas_key.pem']
+    inline = ["chmod 400 /home/centos/faas_key.pem"]
   }
 
   provisioner "file" {
