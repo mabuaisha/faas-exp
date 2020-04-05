@@ -8,7 +8,7 @@ export DOCKER_PASSWORD=${DOCKER_PASSWORD}
 export DOCKER_EMAIL=${DOCKER_EMAIL}
 
 function configureKubectl(){
- scp -i ~/.ssh/faas_key.pem -o StrictHostKeyChecking=no centos@$MASTER_IP:/home/centos/admin.conf kubespray-do.conf
+ scp -i /home/centos/faas_key.pem -o StrictHostKeyChecking=no centos@$MASTER_IP:/home/centos/admin.conf kubespray-do.conf
  export KUBECONFIG=$PWD/kubespray-do.conf
 }
 
