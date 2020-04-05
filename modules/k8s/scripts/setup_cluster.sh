@@ -80,7 +80,7 @@ function setupK8SCluster(){
     # Enable virtualenv
     pyenv activate k8s
     # Run ansible cluster
-    ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=~/.ssh/faas_key.pem cluster.yml -e docker_version=19.03
+    ansible-playbook -i /home/centos/inventory.yml -u centos -b --key-file=/home/centos/faas_key.pem cluster.yml -e docker_version=19.03
     # Deactivate virtualenv
     pyenv deactivate
   popd

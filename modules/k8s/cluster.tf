@@ -52,7 +52,7 @@ resource "null_resource" "cluster" {
 
   provisioner "file" {
     source = var.private_key
-    destination = "~/.ssh/faas_key.pem"
+    destination = "/home/centos/faas_key.pem"
   }
 
   provisioner "file" {
