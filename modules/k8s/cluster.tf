@@ -76,7 +76,7 @@ resource "null_resource" "cluster" {
 
   provisioner "remote-exec" {
     inline = [
-      "chmod 400 ~/.ssh/faas_key.pem",
+      "chmod 400 /home/centos/faas_key.pem",
       "chmod +x /home/centos/setup_cluster.sh",
       "/home/centos/setup_cluster.sh",
     ]
