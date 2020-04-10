@@ -19,7 +19,7 @@ sudo firewall-cmd --reload
 
 # Configure FTP Server and user
 yes | sudo cp -rf /home/centos/vsftpd.conf /etc/vsftpd/
-sudo useradd -m -c “FTP User” -s /bin/bash ${ftp_username}
+sudo useradd -m -c "FTP User" -s /bin/bash ${ftp_username}
 echo ${ftp_password} | sudo passwd ${ftp_username} --stdin
 echo "${ftp_username}" | sudo tee -a /etc/vsftpd/user_list
 sudo systemctl restart vsftpd
