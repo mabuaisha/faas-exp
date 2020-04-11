@@ -2,7 +2,7 @@
 
 const Matrix = require("./matrix.js");
 
-module.exports = (event, context) => {
+module.exports = async(event, context) => {
   console.log(event);
   console.log(context);
   let param = 1;
@@ -12,11 +12,11 @@ module.exports = (event, context) => {
 
   }
   console.log('Input param=' + param);
-  const a = Matrix.create(param, param);
-  const b = Matrix.create(param, param);
-  const resultBig = Matrix.multiply(a, b);
+  const a = await Matrix.create(param, param);
+  const b = await Matrix.create(param, param);
+  const resultBig = await Matrix.multiply(a, b);
   const result = {
-    'result': Matrix.subset(resultBig, 0, 0, 10, 10)
+    'result': await Matrix.subset(resultBig, 0, 0, 10, 10)
   };
 
   return context

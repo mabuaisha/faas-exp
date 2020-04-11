@@ -2,15 +2,15 @@
 
 const fs = require('fs');
 
-module.exports = (event, context) => {
+module.exports = async(event, context) => {
   console.log(event);
   console.log(context);
-  let writer = fs.createWriteStream('/tmp/log.txt', {
+  let writer = await fs.createWriteStream('/tmp/log.txt', {
     flags: 'a' // 'a' means appending (old data will be preserved)
   });
 
   writer.write(event['body']);
-  let buffer = fs.readFileSync('/tmp/log.txt');
+  let buffer = await fs.readFileSync('/tmp/log.txt');
   console.log(buffer.toString());
   const result = buffer.toString();
   return context

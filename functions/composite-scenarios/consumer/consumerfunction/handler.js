@@ -19,7 +19,7 @@ let doRequest = function(url) {
   return res;
 };
 
-module.exports = (event, context, callback) => {
+module.exports = async(event, context, callback) => {
   console.log(event);
   console.log(context);
   const gateway_endpoint = process.env.gateway_endpoint;
@@ -35,7 +35,7 @@ module.exports = (event, context, callback) => {
   }
   // This call to a matrix function
   const url = gateway_endpoint + "/function/matrixfunction?param=" + param;
-  let res = doRequest(url);
+  let res = await doRequest(url);
   if (res['statusCode'] == 200) {
         return context.status(res['statusCode']).succeed(res['result']);
   } else {
