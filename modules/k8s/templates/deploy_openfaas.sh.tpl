@@ -21,6 +21,28 @@ function configureDockerHub(){
         --docker-email=$DOCKER_EMAIL
 }
 
+function setupIngressController(){
+    # Clone kubernetes-ingress controller from nginxinc
+    git clone https://github.com/nginxinc/kubernetes-ingress/
+    cd kubernetes-ingress/deployments
+    git checkout v1.6.3
+
+    # Configure RBAC
+    kubectl apply -f common/ns-and-sa.yaml
+    kubectl apply -f rbac/rbac.yaml
+
+    # Create the Default Secret, Customization ConfigMap, and Custom Resource Definitions
+    kubectl apply -f common/default-server-secret.yaml
+    kubectl apply -f common/nginx-config.yaml
+    kubectl apply -f common/custom-resource-definitions.yaml
+
+    # Deploy the Ingress Controller
+    kubectl apply -f daemon-set/nginx-ingress.yaml
+
+    # Create a Service for the Ingress Controller Pods
+    kubectl create -f service/nodeport.yaml
+}
+
 function deployOpenFaas(){
  kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
 
@@ -40,6 +62,8 @@ function deployOpenFaas(){
 }
 
 configureKubectl
+
+setupIngressController
 
 deployOpenFaas
 
