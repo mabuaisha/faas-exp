@@ -7,6 +7,11 @@ functions:
     lang: node12
     handler: ./fibfunction
     image: mabuaisha/fibfunction:latest
+    labels:
+      com.openfaas.scale.min: 1
+      com.openfaas.scale.max: 15
     # Only relevant for K8S
     secrets:
       - dockerhub
+    environment:
+      write_debug: true

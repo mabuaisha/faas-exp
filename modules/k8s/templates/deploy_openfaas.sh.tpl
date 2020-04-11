@@ -13,6 +13,7 @@ function configureKubectl(){
 }
 
 function configureDockerHub(){
+    docker login --username="$DOCKER_USERNAME" --password="$DOCKER_PASSWORD" 2> /dev/null
     kubectl create secret docker-registry dockerhub \
         -n openfaas-fn \
         --docker-username=$DOCKER_USERNAME \
@@ -30,6 +31,7 @@ function deployOpenFaas(){
     --namespace openfaas  \
     --set functionNamespace=openfaas-fn \
     --set generateBasicAuth=true \
+    --set ingress.enabled=true \
     --set faasIdler.dryRun=false
 
  PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)

@@ -2,9 +2,9 @@
 
 module.exports = async (event, context) => {
   let number = event['body'];
-  number = number.replace(/\n/g, '');
   console.log(event);
   console.log(context);
+  number = number.replace(/\n/g, '');
 
     if (!number || !isNumeric(number)) {
         return context
