@@ -5,7 +5,7 @@ const request = require('sync-request');
 let doRequest = function(url) {
 
   let result = null;
-  let res = request('POST', url);
+  let res = request('GET', url);
   let statusCode = res.statusCode;
   if (statusCode == 200) {
        result = JSON.parse(res.getBody('utf8'));
