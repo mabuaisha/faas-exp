@@ -11,8 +11,8 @@ resource "null_resource" "nomad_jobs" {
 
   provisioner "remote-exec" {
     inline = [
-      "curl https://raw.githubusercontent.com/hashicorp/faas-nomad/master/nomad_job_files/faas.hcl -o /home/centos/faas.hcl",
-      "curl https://raw.githubusercontent.com/hashicorp/faas-nomad/master/nomad_job_files/monitoring.hcl -o /home/centos/monitoring.hcl",
+      "curl https://raw.githubusercontent.com/mabuaisha/faas-nomad/master/nomad_job_files/faas.hcl -o /home/centos/faas.hcl",
+      "curl https://raw.githubusercontent.com/mabuaisha/faas-nomad/master/nomad_job_files/monitoring.hcl -o /home/centos/monitoring.hcl",
       "nomad run /home/centos/faas.hcl",
       "nomad run /home/centos/monitoring.hcl"
     ]
