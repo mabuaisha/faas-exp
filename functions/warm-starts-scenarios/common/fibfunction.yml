@@ -2,18 +2,18 @@ version: 1.0
 provider:
   name: openfaas
   # This can be override upon request/need
-  gateway: http://gateway.openfaas.local
+  gateway: http://gateway.openfaas.local:8080
 functions:
   fibfunction:
     lang: node12
     handler: ./fibfunction
     image: mabuaisha/fibfunction:latest
     labels:
-      datacenters: "dc1"
-      com.openfaas.scale.min: 5
-      com.openfaas.scale.max: 5
-      # Relevant only for nomad
-      com.openfaas.scale.factor: 100
+      com.openfaas.scale.min: 1
+      com.openfaas.scale.max: 20
+      com.openfaas.scale.zero: true
     environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
       write_debug: true
 

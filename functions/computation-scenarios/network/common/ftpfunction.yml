@@ -7,7 +7,13 @@ functions:
     lang: node12
     handler: ./ftpfunction
     image: mabuaisha/ftpfunction:latest
+    labels:
+      com.openfaas.scale.min: 1
+      com.openfaas.scale.max: 20
+      com.openfaas.scale.zero: true
     environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
       write_debug: true
       ftp_host: YOUR_IP_FTP_SERVER
       ftp_user: YOUR_FTP_USER_NAME

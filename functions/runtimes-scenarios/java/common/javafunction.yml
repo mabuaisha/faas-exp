@@ -8,3 +8,11 @@ functions:
     lang: java8
     handler: ./javafunction
     image: mabuaisha/javafunction:latest
+    labels:
+      com.openfaas.scale.min: 1
+      com.openfaas.scale.max: 20
+      com.openfaas.scale.zero: true
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+      write_debug: true

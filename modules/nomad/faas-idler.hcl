@@ -5,6 +5,13 @@ job "faas-idler" {
 
   type = "service"
 
+  constraint {
+    attribute = "${attr.cpu.arch}"
+    operator  = "!="
+    value     = "arm"
+  }
+
+
 
   # A group defines a series of tasks that should be co-located
   # on the same client (host). All tasks within a group will be
@@ -12,6 +19,13 @@ job "faas-idler" {
   group "faas-idler" {
     # Specify the number of these tasks we want.
     count = 1
+
+    restart {
+      attempts = 10
+      interval = "5m"
+      delay    = "25s"
+      mode     = "delay"
+    }
 
     # Create an individual task (unit of work). This particular
     # task utilizes a Docker container to front a web application.
@@ -23,11 +37,21 @@ job "faas-idler" {
       # Configuration is specific to each driver.
       config {
         image = "openfaas/faas-idler:0.3.0"
-         args = [
-          "/home/app/faas-idler",
-          "-dry-run=false",
-        ]
+        args = ["-dry-run=false"]
+        dns_servers = ["${NOMAD_IP_http}", "8.8.8.8", "8.8.8.4"]
+        # It is possible to set environment variables which will be
+        # available to the task when it runs.
       }
+
+      env {
+        gateway_url = "http://192.168.0.13:8080"
+        prometheus_host = "192.168.0.13"
+        # This port should be opened before running this job
+        prometheus_port = "9090"
+        inactivity_duration = "5m"
+        reconcile_interval = "2m"
+      }
+
 
       # The service block tells Nomad how to register this service
       # with Consul for service discovery and monitoring.
@@ -40,16 +64,6 @@ job "faas-idler" {
         tags = ["faas"]
       }
 
-      # It is possible to set environment variables which will be
-      # available to the task when it runs.
-      env {
-        gateway_url = "http://192.168.0.26:8080/"
-        prometheus_host = "192.168.0.26"
-        # This port should be opened before running this job
-        prometheus_port = "9090"
-        inactivity_duration = "10m"
-        reconcile_interval = "2m"
-      }
 
       # Specify the maximum resources required to run the task,
       # include CPU, memory, and bandwidth.

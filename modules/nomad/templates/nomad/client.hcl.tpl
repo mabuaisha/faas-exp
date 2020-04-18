@@ -12,6 +12,9 @@ advertise {
 }
 client {
   enabled = true
+  options {
+    "docker.auth.config" = "/etc/docker-auth.json"
+  }
 }
 
 consul {
@@ -26,10 +29,4 @@ consul {
   # Enabling the server and client to bootstrap using Consul.
   server_auto_join = true
   client_auto_join = true
-}
-
-plugin "docker" {
-  auth {
-    config = "/etc/docker-auth.json"
-  }
 }

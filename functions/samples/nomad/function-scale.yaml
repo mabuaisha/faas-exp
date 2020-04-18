@@ -2,15 +2,19 @@ version: 1.0
 provider:
   name: openfaas
   # This can be override upon request/need
-  gateway: http://gateway.openfaas.local
+  gateway: http://192.168.0.13:8080
 functions:
   nomadfunction:
     lang: node12
     handler: ./nomadfunction
     image: mabuaisha/nomadfunction:latest
     labels:
-      com.openfaas.scale.min: 5
-      com.openfaas.scale.max: 5
-      com.openfaas.scale.factor: 100
+      datacenters: "dc1"
+      com.openfaas.scale.min: "5"
+      com.openfaas.scale.max: "5"
+      com.openfaas.scale.factor: "100"
+      com.openfaas.scale.zero: true
     environment:
-      write_debug: true
+        read_timeout: 20s
+        write_timeout: 20s
+        write_debug: true
