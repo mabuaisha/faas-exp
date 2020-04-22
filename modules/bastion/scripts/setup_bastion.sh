@@ -12,11 +12,19 @@ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/dock
 sudo yum install -y docker-ce-19.03.7-3.el7
 sudo yum install -y httpd-tools
 sudo yum install -y unzip
+sudo yum install -y java-1.8.0-openjdk
 
 # Install and configure terraform in bastion host
 curl https://releases.hashicorp.com/terraform/0.12.21/terraform_0.12.21_linux_386.zip -o terraform.zip
 unzip terraform.zip
 sudo mv terraform /usr/local/bin/
+
+# Install Jmeter
+curl http://apache.stu.edu.tw//jmeter/binaries/apache-jmeter-5.2.1.tgz -o apache-jmeter-5.2.1.tgz
+tar -xf apache-jmeter-5.2.1.tgz
+echo 'export JMETER_HOME=/home/centos/apache-jmeter-5.2.1' >> ~/.bashrc
+echo  'export PATH=$JMETER_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
 
 # Config docker
 sudo usermod -aG docker centos

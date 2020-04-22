@@ -2,7 +2,7 @@ version: 1.0
 provider:
   name: openfaas
   # This can be override upon request/need
-  gateway: http://gateway.openfaas.local:8080
+  gateway: http://gateway.openfaas.local
 functions:
   fibfunction:
     lang: node12

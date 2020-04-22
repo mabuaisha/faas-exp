@@ -52,7 +52,8 @@ function deployOpenFaas(){
  && helm upgrade openfaas --install openfaas/openfaas \
     --namespace openfaas  \
     --set functionNamespace=openfaas-fn \
-    --set generateBasicAuth=true \
+    --set generateBasicAuth=false \
+    --set basic_auth=false \
     --set ingress.enabled=true \
     --set faasIdler.dryRun=false
 
