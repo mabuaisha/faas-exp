@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import subprocess
 
@@ -8,18 +9,27 @@ from config import Config
 
 # Prepare Config
 config = Config()
+
 # Prepare logger
 logger = logging.getLogger(__name__)
+
+# Set the logger level
+logger.setLevel(logging.DEBUG)
+
 # Create handlers
-handler = logging.StreamHandler()
+handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
 
 # Create formatter
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+# Set formatter
 handler.setFormatter(formatter)
+
+# Add handler to the logger
 logger.addHandler(handler)
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FUNCTIONS_DIR = os.path.join(BASE_DIR, 'functions')
@@ -47,6 +57,14 @@ def _execute_command(command, cwd=None):
         return False
 
     return output
+
+
+def _creat_dir(dir_path):
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+        logger.info('Directory {} created successfully'.format(dir_path))
+    else:
+        logger.info('Directory {} is already existed'.format(dir_path))
 
 
 def _get_experiment_config():
@@ -89,73 +107,123 @@ def _run_load_test(properties_path, result_path):
     _execute_command(command)
 
 
-def _execute_sequential_with_auto_scaling(function_dir, function):
+def _execute_with_auto_scaling(function_dir,
+                               function,
+                               load_type,
+                               number_of_users):
+    logger.info(
+        'Start running {0} '
+        'auto scaling test cases for {1}'
+        ''.format(load_type, function['name'])
+    )
+    load_type_path = os.path.join(function_dir, 'autoscaling')
+    _creat_dir(load_type_path)
+
+    experiment = _get_experiment_config()
+    number_of_runs = experiment['number_of_runs']
+    for user in number_of_users:
+        user_path = os.path.join(
+            load_type_path, 'user_{}'.format(user)
+        )
+        _creat_dir(user_path)
+        logger.info('Testing with number of users: {}'.format(user))
+        for run_number in range(1, number_of_runs + 1):
+            logger.info('Testing run # {}'.format(run_number))
+            run_path = os.path.join(user_path, str(run_number))
+            _creat_dir(run_path)
+
+
+def _execute_without_auto_scaling(function_dir,
+                                  function,
+                                  load_type):
+    # This is for number of users we should have
+    number_of_users = 1
+    if load_type == 'parallel':
+        number_of_users = 15
+
+    logger.info(
+        'Start running {0} '
+        ' without auto scaling '
+        'test cases for {1}'
+        ''.format(load_type, function['name'])
+    )
+    noautoscaling_path = os.path.join(function_dir, 'noautoscaling')
+    _creat_dir(noautoscaling_path)
+
+    experiment = _get_experiment_config()
+    number_of_runs = experiment['number_of_runs']
+    replicas = experiment['replicas']
+    for replica in replicas:
+        replica_path = os.path.join(
+            noautoscaling_path, 'replica{}'.format(replica)
+        )
+        _creat_dir(replica_path)
+        logger.info('Testing with replica: {}'.format(replica))
+        for run_number in range(1, number_of_runs + 1):
+            logger.info('Testing run # {}'.format(run_number))
+            run_path = os.path.join(replica_path, str(run_number))
+            _creat_dir(run_path)
+
+
+def _execute_sequential(function_dir, function):
     sequential_path = os.path.join(function_dir, 'sequential')
-    if not os.path.isdir(sequential_path):
-        os.mkdir(sequential_path)
-    number_of_runs = _get_experiment_config()['number_of_runs']
-    for run_number in range(1, number_of_runs + 1):
-        run_path = os.path.join(sequential_path, str(run_number))
-        if not os.path.isdir(run_path):
-            os.mkdir(run_path)
+    _creat_dir(sequential_path)
 
-        #
-        result_path = os.path.join(run_path, 'results')
-        logger.info('The result path for run')
+    _execute_with_auto_scaling(
+        sequential_path,
+        function,
+        'sequential',
+        number_of_users=[1]
+    )
 
-
-def _execute_sequential_without_auto_scaling(function_dir, function):
-    pass
-
-
-def _execute_parallel_with_auto_scaling(function_dir, function):
-    pass
+    _execute_without_auto_scaling(
+        sequential_path,
+        function,
+        'sequential'
+    )
 
 
-def _execute_parallel_without_auto_scaling(function_dir, function):
-    pass
+def _execute_parallel(function_dir, function):
+    parallel_path = os.path.join(function_dir, 'parallel')
+    concurrency = _get_experiment_config()['concurrency']
+    _creat_dir(parallel_path)
+
+    _execute_with_auto_scaling(
+        parallel_path,
+        function,
+        'parallel',
+        number_of_users=concurrency
+    )
+
+    _execute_without_auto_scaling(
+        parallel_path,
+        function,
+        'parallel',
+    )
 
 
-def _execute_function(function):
+def _execute_function(function, result_dir):
+    logger.info('Start executing function {}'.format(function['name']))
     function_yaml_path = _get_function_yaml_path(
         function['dir_path'], function['name']
     )
     function['yaml_path'] = function_yaml_path
-    result_dir = _get_experiment_config()['result_dir']
     # This is the result directory where the result will be dumped
     function_result_path = os.path.join(result_dir, function['name'])
-    # Create a directory for the result if does not exist
-    if not os.path.isdir(result_dir):
-        os.mkdir(result_dir)
-    # Create the function if
-    if not os.path.isdir(function_result_path):
-        os.mkdir(function_result_path)
+    # Create the function res
+    _creat_dir(function_result_path)
 
-    # Run sequential requests with auto scaling
-    _execute_sequential_with_auto_scaling(
-        function_result_path, function
-    )
-
-    # Run sequential requests without auto scaling
-    _execute_sequential_without_auto_scaling(
-        function_result_path, function
-    )
-
-    # Run parallel requests with auto scaling
-    _execute_parallel_with_auto_scaling(
-        function_result_path, function
-    )
-
-    # Run parallel requests without auto scaling
-    _execute_parallel_without_auto_scaling(
-        function_result_path, function
-    )
+    _execute_sequential(function_result_path, function)
+    _execute_parallel(function_result_path, function)
 
 
 def execute_experiment():
+    result_dir = _get_experiment_config()['result_dir']
+    # Create a the main directory which holds all function results
+    _creat_dir(result_dir)
     functions = config['functions']
     for func in functions:
-        _execute_function(func)
+        _execute_function(func, result_dir)
 
 
 @click.group()
