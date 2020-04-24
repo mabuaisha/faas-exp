@@ -18,6 +18,9 @@ clouds.yaml
 
 # IDE
 .idea
+out/
+*.pyc
+*egg-info
 
 template
 build

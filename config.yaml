@@ -1,0 +1,26 @@
+experiment:
+  server: gateway.openfaas.local
+  port: 80
+  orchestrator: k8s
+  number_of_runs: 10
+  number_of_requests: 30000
+  replicas:
+    - 1
+    - 5
+    - 30
+  concurrency:
+    - 2
+    - 5
+    - 15
+    - 25
+  result_dir: /home/centos/result
+
+functions:
+  - name: fibfunction
+    cold_start: true
+    idle_duration: 15
+    dir_path: functions/warm-starts-scenarios
+    api:
+      uri: function/fibfunction
+      param: 25
+      http_method: http

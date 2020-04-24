@@ -202,13 +202,13 @@ jmeter.reportgenerator.exporter.json.property.output_dir=report-output
 
 
 # This is settings for users
-numberOfUsers=1
+numberOfUsers={{ number_of_users }}
 rampUp=1
-loopCount=2
+loopCount={{ loop_count }}
 
 # Settings for http request
-protocol=http
-server=gateway.openfaas.local
-port=80
-path=function/fibfunction?param=12
-httpMethod=GET
+protocol={{ protocol }}
+server={{ server }}
+port={{ port }}
+path={{ path }}
+httpMethod={{ httpMethod }}
