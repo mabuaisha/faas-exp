@@ -4,6 +4,7 @@ import logging
 import subprocess
 
 import click
+from jinja2 import Environment, FileSystemLoader
 
 from config import Config
 
@@ -67,8 +68,42 @@ def _creat_dir(dir_path):
         logger.info('Directory {} is already existed'.format(dir_path))
 
 
+def _clean_properties_file():
+    os.remove(os.path.join(JMETER_DIR, 'properties/config.properties'))
+
+
 def _get_experiment_config():
     return config['experiment']
+
+
+def _generate_jmeter_properties_file(function, number_of_users):
+    template_path = os.path.join(
+        JMETER_DIR, 'properties/config.properties.j2'
+    )
+    experiment = _get_experiment_config()
+    number_of_requesrs = experiment['number_of_requests']
+    context = {
+        'number_of_users': number_of_users,
+        'loop_count': int(number_of_requesrs/number_of_users),
+        'server': experiment['server'],
+        'port': experiment['port'],
+        'http_method': function['api']['http_method'],
+        'path': function['api']['uri']
+    }
+
+    if function['api'].get('param'):
+        context['path'] = '{path}?param={param}'.format(
+            path=context['path'], param=function['api']['param'])
+
+    template_name = template_path.rsplit('/', 1)[1]
+    template_path = template_path.rsplit('/', 1)[0]
+    env = Environment(loader=FileSystemLoader(template_path))
+    content = env.get_template(template_name).render(context)
+    prop_file = os.path.join(JMETER_DIR, 'properties/config.properties')
+    with open(prop_file, 'w') as f:
+        f.write(content)
+
+    return prop_file
 
 
 def _get_function_yaml_path(dir_path, name):
@@ -84,26 +119,46 @@ def _get_function_yaml_path(dir_path, name):
     return function_yaml
 
 
-def _deploy_function(function_path):
-    _execute_command(
-        'faas-cli deploy -yaml {0}'.format(function_path),
-        cwd=FUNCTIONS_DIR
-    )
+def _deploy_function(function_path, options=None):
+    labels = ''
+    if options:
+        for label in options.get('labels', []):
+            labels += ' --label {0}'.format(label)
+    command = 'faas-cli deploy -yaml {0}'.format(function_path)
+    if labels:
+        command = '{command}{labels}'.format(command=command, labels=labels)
+    logger.info(command)
+    output = _execute_command(command, cwd=FUNCTIONS_DIR)
+    if not output:
+        raise Exception(
+            'Error when trying to deploy function {0}'.format(function_path)
+        )
+    logger.info('Deploy function {0} successfully'.format(function_path))
 
 
 def _remove_function(name):
-    _execute_command('faas-cli remove {0}'.format(name))
+    command = 'echo Remove function {}'.format(name)
+    logger.info(command)
+    output = _execute_command(command)
+    if not output:
+        raise Exception(
+            'Error when trying to remove function {0}'.format(name)
+        )
+    logger.info('Remove function {0} successfully'.format(name))
 
 
 def _run_load_test(properties_path, result_path):
+    result_path = os.path.join(result_path, 'results')
+    summary_result = os.path.join(os.path.dirname(result_path), 'summary.jtl')
     jmx_path = os.path.join(JMETER_DIR, 'jmx/faas.jmx')
     command = 'jmeter -n -t {jmx_path}' \
               ' -p {properties_path}' \
               ' -l {summary_result} -e -o {result_path}' \
               ''.format(jmx_path=jmx_path,
                         properties_path=properties_path,
-                        summary_result='',
+                        summary_result=summary_result,
                         result_path=result_path)
+    logger.info('Running {0}'.format(command))
     _execute_command(command)
 
 
@@ -111,13 +166,22 @@ def _execute_with_auto_scaling(function_dir,
                                function,
                                load_type,
                                number_of_users):
+
+    function_name = function['name']
     logger.info(
         'Start running {0} '
         'auto scaling test cases for {1}'
-        ''.format(load_type, function['name'])
+        ''.format(load_type, function_name)
     )
     load_type_path = os.path.join(function_dir, 'autoscaling')
     _creat_dir(load_type_path)
+
+    # Prepare function to deploy
+    function_yaml = _get_function_yaml_path(
+        function['dir_path'], function_name
+    )
+    # Deploy function
+    _deploy_function(function_yaml)
 
     experiment = _get_experiment_config()
     number_of_runs = experiment['number_of_runs']
@@ -126,43 +190,67 @@ def _execute_with_auto_scaling(function_dir,
             load_type_path, 'user_{}'.format(user)
         )
         _creat_dir(user_path)
+        # Prepare jmeter configuration
+        prop_file = _generate_jmeter_properties_file(function, user)
+        logger.info('This is the prop file {}'.format(prop_file))
         logger.info('Testing with number of users: {}'.format(user))
         for run_number in range(1, number_of_runs + 1):
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(user_path, str(run_number))
             _creat_dir(run_path)
+            _run_load_test(prop_file, run_path)
+
+    _remove_function(function_name)
+    _clean_properties_file()
 
 
 def _execute_without_auto_scaling(function_dir,
                                   function,
                                   load_type):
-    # This is for number of users we should have
-    number_of_users = 1
-    if load_type == 'parallel':
-        number_of_users = 15
-
+    function_name = function['name']
     logger.info(
         'Start running {0} '
         ' without auto scaling '
         'test cases for {1}'
-        ''.format(load_type, function['name'])
+        ''.format(load_type, function_name)
     )
+    # This is for number of users we should have
+    number_of_users = 1
+    if load_type == 'parallel':
+        number_of_users = 15
     noautoscaling_path = os.path.join(function_dir, 'noautoscaling')
     _creat_dir(noautoscaling_path)
 
     experiment = _get_experiment_config()
     number_of_runs = experiment['number_of_runs']
     replicas = experiment['replicas']
+    # Prepare jmeter configuration
     for replica in replicas:
         replica_path = os.path.join(
             noautoscaling_path, 'replica{}'.format(replica)
         )
         _creat_dir(replica_path)
+        # Prepare function to deploy
+        function_yaml = _get_function_yaml_path(
+            function['dir_path'], function_name
+        )
+        # Deploy function
+        _deploy_function(function_yaml, options={
+            'lables': [
+                'com.openfaas.scale.max={}'.format(replica),
+                'com.openfaas.scale.min={}'.format(replica)
+            ]
+        })
+        prop_file = _generate_jmeter_properties_file(function, number_of_users)
         logger.info('Testing with replica: {}'.format(replica))
         for run_number in range(1, number_of_runs + 1):
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(replica_path, str(run_number))
             _creat_dir(run_path)
+            _run_load_test(prop_file, run_path)
+
+        _remove_function(function_name)
+        _clean_properties_file()
 
 
 def _execute_sequential(function_dir, function):

@@ -3,7 +3,8 @@ experiment:
   port: 80
   orchestrator: k8s
   number_of_runs: 10
-  number_of_requests: 30000
+  delay_between_runs: 2 # The format in minute
+  number_of_requests: 40000
   replicas:
     - 1
     - 10
@@ -18,7 +19,7 @@ experiment:
 functions:
   - name: fibfunction
     cold_start: true
-    idle_duration: 15
+    idle_duration: 15 # the format in minute
     dir_path: functions/warm-starts-scenarios
     api:
       uri: function/fibfunction

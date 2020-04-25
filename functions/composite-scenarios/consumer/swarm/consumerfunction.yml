@@ -14,4 +14,4 @@ functions:
       gateway_endpoint: http://gateway:8080
     labels:
       com.openfaas.scale.min: 1
-      com.openfaas.scale.factor: 20
+      com.openfaas.scale.max: 20
