@@ -297,14 +297,14 @@ def _execute_sequential(function_dir, function):
         number_of_users=[1]
     )
 
-    _execute_without_auto_scaling(
-        sequential_path,
-        function,
-        'sequential'
-    )
-    logger.info(
-        '*************** Finished sequential test cases ***************\n'
-    )
+    # _execute_without_auto_scaling(
+    #     sequential_path,
+    #     function,
+    #     'sequential'
+    # )
+    # logger.info(
+    #     '*************** Finished sequential test cases ***************\n'
+    # )
 
 
 def _execute_parallel(function_dir, function):
@@ -338,7 +338,7 @@ def _execute_function(function, result_dir):
     _creat_dir(function_result_path)
 
     _execute_sequential(function_result_path, function)
-    _execute_parallel(function_result_path, function)
+    #_execute_parallel(function_result_path, function)
 
 
 def execute_experiment():

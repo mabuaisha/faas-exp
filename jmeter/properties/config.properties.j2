@@ -212,3 +212,6 @@ server={{ server }}
 port={{ port }}
 path={{ path }}
 httpMethod={{ http_method }}
+{% if data %}
+    body={{data}}
+{% endif %}
