@@ -10,12 +10,4 @@ functions:
     labels:
       com.openfaas.scale.min: 1
       com.openfaas.scale.max: 20
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-      write_debug: true
-      ftp_host: YOUR_IP_FTP_SERVER
-      ftp_user: ftp_user
-      ftp_password: ftp_password
-
 

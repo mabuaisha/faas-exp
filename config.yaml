@@ -20,6 +20,9 @@ functions:
     cold_start: true
     idle_duration: 15 # the format in minute
     yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
     api:
       uri: function/fibfunction
       param: 25
@@ -27,43 +30,45 @@ functions:
 
   - name: gofunction
     yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
     api:
       uri: function/gofunction
       http_method: POST
 
   - name: javafunction
     yaml_path: functions/runtimes-scenarios/java/k8s/javafunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
     api:
       uri: function/javafunction
       http_method: POST
 
   - name: nodefunction
     yaml_path: functions/runtimes-scenarios/nodejs/k8s/nodefunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
     api:
       uri: function/nodefunction
       http_method: POST
 
   - name: pythonfunction
     yaml_path: functions/runtimes-scenarios/python/k8s/pythonfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
     api:
       uri: function/pythonfunction
       http_method: POST
 
-  - name: ftpfunction
-    yaml_path: functions/computation-scenarios/network/k8s/ftpfunction.yml
-    api:
-      uri: function/ftpfunction
-      http_method: GET
-
-  - name: matrixfunction
-    yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
-    api:
-      uri: function/matrixfunction
-      param: 300
-      http_method: GET
-
   - name: iofunction
     yaml_path: functions/computation-scenarios/io/k8s/iofunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
     api:
       uri: function/iofunction
       http_method: POST
@@ -77,8 +82,37 @@ functions:
         Lorem Ipsum passages, and more recently with desktop publishing software
         like Aldus PageMaker including versions of Lorem Ipsum.
 
+  - name: matrixfunction
+    yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/matrixfunction
+      param: 300
+      http_method: GET
+
+  - name: ftpfunction
+    yaml_path: functions/computation-scenarios/network/k8s/ftpfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+      # FTP HOST
+      ftp_host: ftp_user
+      # FTP user name, should match the value specified on terraform for ftp module
+      ftp_user: ftp_user
+      # FTP password, should match the value specified on terraform for ftp module
+      ftp_password: ftp_password
+    api:
+      uri: function/ftpfunction
+      http_method: GET
+
   - name: consumerfunction
-    yaml_path: functions/composite-scenarios/consumer/k8s/consumerfunction.yml
+    yaml_path: functions/composite-scenarios/consumer/nomad/consumerfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+      gateway_endpoint: http://gateway.openfaas:8080
     api:
       uri: function/consumerfunction
       param: 300

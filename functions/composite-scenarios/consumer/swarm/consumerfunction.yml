@@ -7,10 +7,6 @@ functions:
     lang: node12
     handler: ./consumerfunction
     image: mabuaisha/consumerfunction:latest
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-      gateway_endpoint: http://gateway:8080
     labels:
       com.openfaas.scale.min: 1
       com.openfaas.scale.max: 20

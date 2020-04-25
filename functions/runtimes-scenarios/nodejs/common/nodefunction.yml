@@ -11,7 +11,3 @@ functions:
     labels:
       com.openfaas.scale.min: 1
       com.openfaas.scale.max: 20
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-      write_debug: true
