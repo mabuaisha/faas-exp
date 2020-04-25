@@ -140,9 +140,16 @@ def _generate_jmeter_properties_file(function, number_of_users):
         context['path'] = '{path}?param={param}'.format(
             path=context['path'], param=function['api']['param'])
 
+    if function.get('data'):
+        context['data'] = function['data']
+
     template_name = template_path.rsplit('/', 1)[1]
     template_path = template_path.rsplit('/', 1)[0]
-    env = Environment(loader=FileSystemLoader(template_path))
+    env = Environment(
+        autoescape=False,
+        trim_blocks=False,
+        loader=FileSystemLoader(template_path)
+    )
     content = env.get_template(template_name).render(context)
     prop_file = os.path.join(JMETER_DIR, 'properties/config.properties')
     with open(prop_file, 'w') as f:
@@ -297,14 +304,14 @@ def _execute_sequential(function_dir, function):
         number_of_users=[1]
     )
 
-    # _execute_without_auto_scaling(
-    #     sequential_path,
-    #     function,
-    #     'sequential'
-    # )
-    # logger.info(
-    #     '*************** Finished sequential test cases ***************\n'
-    # )
+    _execute_without_auto_scaling(
+        sequential_path,
+        function,
+        'sequential'
+    )
+    logger.info(
+        '*************** Finished sequential test cases ***************\n'
+    )
 
 
 def _execute_parallel(function_dir, function):
@@ -338,7 +345,7 @@ def _execute_function(function, result_dir):
     _creat_dir(function_result_path)
 
     _execute_sequential(function_result_path, function)
-    #_execute_parallel(function_result_path, function)
+    _execute_parallel(function_result_path, function)
 
 
 def execute_experiment():
