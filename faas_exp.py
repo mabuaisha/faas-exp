@@ -159,7 +159,11 @@ def _run_load_test(properties_path, result_path):
                         summary_result=summary_result,
                         result_path=result_path)
     logger.info('Running {0}'.format(command))
-    _execute_command(command)
+    output = _execute_command(command)
+    if not output:
+        raise Exception(
+            'Failure while trying to run {}'.format(command)
+        )
 
 
 def _execute_with_auto_scaling(function_dir,
@@ -254,6 +258,7 @@ def _execute_without_auto_scaling(function_dir,
 
 
 def _execute_sequential(function_dir, function):
+    logger.info('*************** Start sequential test cases ***************')
     sequential_path = os.path.join(function_dir, 'sequential')
     _creat_dir(sequential_path)
 
@@ -269,9 +274,13 @@ def _execute_sequential(function_dir, function):
         function,
         'sequential'
     )
+    logger.info(
+        '*************** Finished sequential test cases ***************\n'
+    )
 
 
 def _execute_parallel(function_dir, function):
+    logger.info('*************** Start parallel test cases ***************')
     parallel_path = os.path.join(function_dir, 'parallel')
     concurrency = _get_experiment_config()['concurrency']
     _creat_dir(parallel_path)
@@ -287,6 +296,9 @@ def _execute_parallel(function_dir, function):
         parallel_path,
         function,
         'parallel',
+    )
+    logger.info(
+        '*************** Finished parallel test cases ***************\n'
     )
 
 
