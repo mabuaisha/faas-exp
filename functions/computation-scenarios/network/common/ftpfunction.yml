@@ -15,7 +15,7 @@ functions:
       write_timeout: 5m5s
       write_debug: true
       ftp_host: YOUR_IP_FTP_SERVER
-      ftp_user: YOUR_FTP_USER_NAME
-      ftp_password: YOUR_FTP_PASSWORD
+      ftp_user: ftp_user
+      ftp_password: ftp_password
 
 

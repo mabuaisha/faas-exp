@@ -99,8 +99,7 @@ def _get_function_endpoint(function):
 def _wait_function_to_ready(endpoint, http_method):
     ready = False
     while not ready:
-        response = requests.get(endpoint)
-        response = getattr(response, http_method.lower())(endpoint)
+        response = getattr(requests, http_method.lower())(endpoint)
         status_code = response.status_code
         if status_code == 404:
             logger.warning(
@@ -109,7 +108,7 @@ def _wait_function_to_ready(endpoint, http_method):
             continue
         elif status_code == 200:
             ready = True
-            logger.warning(
+            logger.info(
                 'Function endpoint {0} is ready'.format(endpoint))
             break
         else:
@@ -150,19 +149,6 @@ def _generate_jmeter_properties_file(function, number_of_users):
         f.write(content)
 
     return prop_file
-
-
-def _get_function_yaml_path(dir_path, name):
-    # Get the orchestrator type so that we can tell where is the funciton
-    # yaml file need to be loaded
-    sub_dir = _get_experiment_config()['orchestrator']
-    if sub_dir != 'k8s':
-        sub_dir = 'common'
-
-    function_yaml = os.path.join(
-        os.path.join(dir_path, sub_dir), '{}.yml'.format(name)
-    )
-    return function_yaml
 
 
 def _deploy_function(function_path, options=None):
@@ -226,12 +212,8 @@ def _execute_with_auto_scaling(function_dir,
     load_type_path = os.path.join(function_dir, 'autoscaling')
     _creat_dir(load_type_path)
 
-    # Prepare function to deploy
-    function_yaml = _get_function_yaml_path(
-        function['dir_path'], function_name
-    )
     # Deploy function
-    _deploy_function(function_yaml)
+    _deploy_function(function['yaml_path'])
     endpoint = _get_function_endpoint(function)
     _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
 
@@ -282,12 +264,8 @@ def _execute_without_auto_scaling(function_dir,
             noautoscaling_path, 'replica{}'.format(replica)
         )
         _creat_dir(replica_path)
-        # Prepare function to deploy
-        function_yaml = _get_function_yaml_path(
-            function['dir_path'], function_name
-        )
         # Deploy function
-        _deploy_function(function_yaml, options={
+        _deploy_function(function['yaml_path'], options={
             'lables': [
                 'com.openfaas.scale.max={}'.format(replica),
                 'com.openfaas.scale.min={}'.format(replica)
@@ -354,10 +332,6 @@ def _execute_parallel(function_dir, function):
 
 def _execute_function(function, result_dir):
     logger.info('Start executing function {}'.format(function['name']))
-    function_yaml_path = _get_function_yaml_path(
-        function['dir_path'], function['name']
-    )
-    function['yaml_path'] = function_yaml_path
     # This is the result directory where the result will be dumped
     function_result_path = os.path.join(result_dir, function['name'])
     # Create the function res

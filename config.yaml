@@ -1,7 +1,6 @@
 experiment:
   server: gateway.openfaas.local
   port: 80
-  orchestrator: k8s
   number_of_runs: 2
   delay_between_runs: 2 # The format in minute
   number_of_requests: 40000
@@ -20,7 +19,7 @@ functions:
   - name: fibfunction
     cold_start: true
     idle_duration: 15 # the format in minute
-    dir_path: functions/warm-starts-scenarios
+    yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
     api:
       uri: function/fibfunction
       param: 25

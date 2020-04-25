@@ -14,7 +14,6 @@ functions:
     environment:
       read_timeout: 5m5s
       write_timeout: 5m5s
-      write_debug: true
     # Only relevant for K8S
     secrets:
       - dockerhub

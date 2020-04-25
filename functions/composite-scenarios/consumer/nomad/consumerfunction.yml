@@ -13,6 +13,4 @@ functions:
     environment:
       read_timeout: 5m5s
       write_timeout: 5m5s
-      write_debug: true
-      gateway_endpoint: http://YOUR_LB_IP:8080
-
+      gateway_endpoint: http://gateway.openfaas.local
