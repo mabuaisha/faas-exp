@@ -2,7 +2,7 @@ experiment:
   server: gateway.openfaas.local
   port: 80
   orchestrator: k8s
-  number_of_runs: 10
+  number_of_runs: 2
   delay_between_runs: 2 # The format in minute
   number_of_requests: 40000
   replicas:
@@ -14,7 +14,7 @@ experiment:
     - 5
     - 15
     - 25
-  result_dir: /Users/mabuaisha/Master/result
+  result_dir: /home/centos/result
 
 functions:
   - name: fibfunction
@@ -24,4 +24,4 @@ functions:
     api:
       uri: function/fibfunction
       param: 25
-      http_method: http
+      http_method: GET

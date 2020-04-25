@@ -1,9 +1,11 @@
 import os
 import sys
+import time
 import logging
 import subprocess
 
 import click
+import requests
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -33,7 +35,6 @@ logger.addHandler(handler)
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FUNCTIONS_DIR = os.path.join(BASE_DIR, 'functions')
 JMETER_DIR = os.path.join(BASE_DIR, 'jmeter')
 
 
@@ -74,6 +75,51 @@ def _clean_properties_file():
 
 def _get_experiment_config():
     return config['experiment']
+
+
+def _get_function_endpoint(function):
+    experiment = _get_experiment_config()
+    func = {
+        'http_method': function['api']['http_method']
+    }
+    uri_path = function['api']['uri']
+    if function['api'].get('param'):
+        uri_path = '{path}?param={param}'.format(
+            path=uri_path, param=function['api']['param'])
+
+    endpoint = 'http://{server}:{port}/{uri_path}'.format(
+        server=experiment['server'],
+        port=experiment['port'],
+        uri_path=uri_path
+    )
+    func['endpoint'] = endpoint
+    return func
+
+
+def _wait_function_to_ready(endpoint, http_method):
+    ready = False
+    while not ready:
+        response = requests.get(endpoint)
+        response = getattr(response, http_method.lower())(endpoint)
+        status_code = response.status_code
+        if status_code == 404:
+            logger.warning(
+                'Function endpoint {0} is not ready'.format(endpoint))
+            time.sleep(2)
+            continue
+        elif status_code == 200:
+            ready = True
+            logger.warning(
+                'Function endpoint {0} is ready'.format(endpoint))
+            break
+        else:
+            raise Exception(
+                'Function {0} return'
+                ' status code {1}'.format(
+                    endpoint, status_code)
+            )
+
+    return ready
 
 
 def _generate_jmeter_properties_file(function, number_of_users):
@@ -128,7 +174,7 @@ def _deploy_function(function_path, options=None):
     if labels:
         command = '{command}{labels}'.format(command=command, labels=labels)
     logger.info(command)
-    output = _execute_command(command, cwd=FUNCTIONS_DIR)
+    output = _execute_command(command, cwd=BASE_DIR)
     if not output:
         raise Exception(
             'Error when trying to deploy function {0}'.format(function_path)
@@ -186,6 +232,8 @@ def _execute_with_auto_scaling(function_dir,
     )
     # Deploy function
     _deploy_function(function_yaml)
+    endpoint = _get_function_endpoint(function)
+    _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
 
     experiment = _get_experiment_config()
     number_of_runs = experiment['number_of_runs']
@@ -245,6 +293,8 @@ def _execute_without_auto_scaling(function_dir,
                 'com.openfaas.scale.min={}'.format(replica)
             ]
         })
+        endpoint = _get_function_endpoint(function)
+        _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
         prop_file = _generate_jmeter_properties_file(function, number_of_users)
         logger.info('Testing with replica: {}'.format(replica))
         for run_number in range(1, number_of_runs + 1):

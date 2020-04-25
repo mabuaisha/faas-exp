@@ -8,6 +8,9 @@ setuptools.setup(
     author_email='mabuaisha@outlook.com',
     packages=setuptools.find_packages(),
     entry_points={'console_scripts': ['faas-exp = faas_exp:main']},
-    install_requires=['click==7.1.1',
-                      'ruamel.yaml==0.16.10',
-                      'jinja2==2.11.2'])
+    install_requires=[
+        'requests==2.23.0',
+        'click==7.1.1',
+        'ruamel.yaml==0.16.10',
+        'jinja2==2.11.2'
+    ])
