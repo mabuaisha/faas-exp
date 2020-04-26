@@ -293,6 +293,8 @@ def _execute_without_auto_scaling(function_dir,
         endpoint = _get_function_endpoint(function)
         _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
         prop_file = _generate_jmeter_properties_file(function, number_of_users)
+        # Wait for replica to init
+        time.sleep(10)
         logger.info('Testing with replica: {}'.format(replica))
         for run_number in range(1, number_of_runs + 1):
             logger.info('Testing run # {}'.format(run_number))
