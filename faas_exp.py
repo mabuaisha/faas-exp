@@ -158,14 +158,27 @@ def _generate_jmeter_properties_file(function, number_of_users):
     return prop_file
 
 
-def _deploy_function(function_path, options=None):
-    labels = ''
-    if options:
-        for label in options.get('labels', []):
-            labels += ' --label {0}'.format(label)
+def _deploy_function(function_path, labels=None, env=None):
+    labels_to_add = ''
+    envs_to_add = ''
+    labels = labels or []
+    env = env or {}
+    for label in labels:
+        labels_to_add += ' --label {0}'.format(label)
     command = 'faas-cli deploy -yaml {0}'.format(function_path)
-    if labels:
-        command = '{command}{labels}'.format(command=command, labels=labels)
+    if labels_to_add:
+        command = '{command}{labels}'.format(
+            command=command, labels=labels_to_add
+        )
+
+    for key, value in env.items():
+        envs_to_add += ' --env {key}={value}'.format(key=key, value=value)
+
+    if envs_to_add:
+        command = '{command}{envs}'.format(
+            command=command, envs=envs_to_add
+        )
+
     logger.info(command)
     output = _execute_command(command, cwd=BASE_DIR)
     if not output:
@@ -220,7 +233,7 @@ def _execute_with_auto_scaling(function_dir,
     _creat_dir(load_type_path)
 
     # Deploy function
-    _deploy_function(function['yaml_path'])
+    _deploy_function(function['yaml_path'], env=function.get('env'))
     endpoint = _get_function_endpoint(function)
     _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
 
@@ -272,12 +285,11 @@ def _execute_without_auto_scaling(function_dir,
         )
         _creat_dir(replica_path)
         # Deploy function
-        _deploy_function(function['yaml_path'], options={
-            'lables': [
-                'com.openfaas.scale.max={}'.format(replica),
-                'com.openfaas.scale.min={}'.format(replica)
-            ]
-        })
+        _deploy_function(
+            function['yaml_path'],
+            labels=['com.openfaas.scale.max={}'.format(replica),
+                    'com.openfaas.scale.min={}'.format(replica)],
+            env=function.get('env'))
         endpoint = _get_function_endpoint(function)
         _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
         prop_file = _generate_jmeter_properties_file(function, number_of_users)
