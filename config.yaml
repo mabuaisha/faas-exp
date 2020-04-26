@@ -1,9 +1,9 @@
 experiment:
   server: gateway.openfaas.local
   port: 80
-  number_of_runs: 2
+  number_of_runs: 1
   delay_between_runs: 2 # The format in minute
-  number_of_requests: 40000
+  number_of_requests: 1000
   replicas:
     - 1
     - 10
@@ -98,7 +98,7 @@ functions:
       read_timeout: 5m5s
       write_timeout: 5m5s
       # FTP HOST
-      ftp_host: 127.0.0.1
+      ftp_host: 192.168.0.6
       # FTP user name, should match the value specified on terraform for ftp module
       ftp_user: ftpuser
       # FTP password, should match the value specified on terraform for ftp module

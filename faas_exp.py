@@ -96,20 +96,34 @@ def _get_function_endpoint(function):
     return func
 
 
-def _wait_function_to_ready(endpoint, http_method):
+def _wait_function_status_code(
+        endpoint,
+        http_method,
+        stop_status,
+        check_status,
+        data=None):
+
     ready = False
     while not ready:
-        response = getattr(requests, http_method.lower())(endpoint)
+        attr = {}
+        attr['headers'] = {'content-type': 'text/plain'}
+        http_call = getattr(requests, http_method.lower())
+        if data:
+            attr['data'] = data
+        response = http_call(endpoint, **attr)
         status_code = response.status_code
-        if status_code == 404:
-            logger.warning(
-                'Function endpoint {0} is not ready'.format(endpoint))
-            time.sleep(2)
+        if status_code in check_status:
+            logger.info(
+                'Function endpoint'
+                ' {0} is on {1}'.format(
+                    endpoint, status_code))
+            time.sleep(5)
             continue
-        elif status_code == 200:
+        elif status_code in stop_status:
             ready = True
             logger.info(
-                'Function endpoint {0} is ready'.format(endpoint))
+                'Function endpoint {0} is on {1}'
+                ''.format(endpoint, status_code))
             break
         else:
             raise Exception(
@@ -189,7 +203,7 @@ def _deploy_function(function_path, labels=None, env=None):
 
 
 def _remove_function(name):
-    command = 'echo Remove function {}'.format(name)
+    command = 'faas-cli remove {}'.format(name)
     logger.info(command)
     output = _execute_command(command)
     if not output:
@@ -233,9 +247,15 @@ def _execute_with_auto_scaling(function_dir,
     _creat_dir(load_type_path)
 
     # Deploy function
-    _deploy_function(function['yaml_path'], env=function.get('env'))
+    _deploy_function(function['yaml_path'], env=function.get('environment'))
     endpoint = _get_function_endpoint(function)
-    _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
+    _wait_function_status_code(
+        endpoint['endpoint'],
+        endpoint['http_method'],
+        stop_status=[200],
+        check_status=[404],
+        data=function.get('data')
+    )
 
     experiment = _get_experiment_config()
     number_of_runs = experiment['number_of_runs']
@@ -255,6 +275,13 @@ def _execute_with_auto_scaling(function_dir,
             _run_load_test(prop_file, run_path)
 
     _remove_function(function_name)
+    _wait_function_status_code(
+        endpoint['endpoint'],
+        endpoint['http_method'],
+        stop_status=[404],
+        check_status=[200, 500, 502],
+        data=function.get('data')
+    )
     _clean_properties_file()
 
 
@@ -289,12 +316,19 @@ def _execute_without_auto_scaling(function_dir,
             function['yaml_path'],
             labels=['com.openfaas.scale.max={}'.format(replica),
                     'com.openfaas.scale.min={}'.format(replica)],
-            env=function.get('env'))
+            env=function.get('environment')
+        )
         endpoint = _get_function_endpoint(function)
-        _wait_function_to_ready(endpoint['endpoint'], endpoint['http_method'])
+        _wait_function_status_code(
+            endpoint['endpoint'],
+            endpoint['http_method'],
+            stop_status=[200],
+            check_status=[404],
+            data=function.get('data')
+        )
         prop_file = _generate_jmeter_properties_file(function, number_of_users)
         # Wait for replica to init
-        time.sleep(10)
+        time.sleep(5)
         logger.info('Testing with replica: {}'.format(replica))
         for run_number in range(1, number_of_runs + 1):
             logger.info('Testing run # {}'.format(run_number))
@@ -303,6 +337,15 @@ def _execute_without_auto_scaling(function_dir,
             _run_load_test(prop_file, run_path)
 
         _remove_function(function_name)
+        # wait before checking if the function removed or not
+        # Check if the function already removed or not
+        _wait_function_status_code(
+            endpoint['endpoint'],
+            endpoint['http_method'],
+            stop_status=[404],
+            check_status=[200, 500, 502],
+            data=function.get('data')
+        )
         _clean_properties_file()
 
 
@@ -311,12 +354,12 @@ def _execute_sequential(function_dir, function):
     sequential_path = os.path.join(function_dir, 'sequential')
     _creat_dir(sequential_path)
 
-    _execute_with_auto_scaling(
-        sequential_path,
-        function,
-        'sequential',
-        number_of_users=[1]
-    )
+    # _execute_with_auto_scaling(
+    #     sequential_path,
+    #     function,
+    #     'sequential',
+    #     number_of_users=[1]
+    # )
 
     _execute_without_auto_scaling(
         sequential_path,
@@ -359,7 +402,7 @@ def _execute_function(function, result_dir):
     _creat_dir(function_result_path)
 
     _execute_sequential(function_result_path, function)
-    _execute_parallel(function_result_path, function)
+    #_execute_parallel(function_result_path, function)
 
 
 def execute_experiment():

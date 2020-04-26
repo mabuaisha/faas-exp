@@ -10,11 +10,8 @@ module.exports = async(event, context) => {
   });
 
   writer.write(event['body']);
-  let buffer = await fs.readFileSync('/tmp/log.txt');
-  console.log(buffer.toString());
-  const result = buffer.toString();
   return context
     .status(200)
-    .succeed(result)
+    .succeed(event['body'])
 }
 
