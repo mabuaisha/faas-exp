@@ -44,7 +44,7 @@ function setupIngressController(){
 }
 
 function deployOpenFaas(){
- kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
+ kubectl apply -f https://raw.githubusercontent.com/mabuaisha/faas-netes/master/namespaces.yml
 
  helm repo add openfaas https://openfaas.github.io/faas-netes/
 
