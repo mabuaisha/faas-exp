@@ -2,7 +2,6 @@ experiment:
   server: gateway.openfaas.local
   port: 80
   number_of_runs: 1
-  delay_between_runs: 2 # The format in minute
   number_of_requests: 1000
   replicas:
     - 1
@@ -18,7 +17,8 @@ experiment:
 functions:
   - name: fibfunction
     cold_start: true
-    idle_duration: 15 # the format in minute
+    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
+    inactivity_duration: 15
     yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
     environment:
       read_timeout: 5m5s
@@ -82,6 +82,7 @@ functions:
         Lorem Ipsum passages, and more recently with desktop publishing software
         like Aldus PageMaker including versions of Lorem Ipsum.
 
+
   - name: matrixfunction
     yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
     environment:
@@ -117,3 +118,4 @@ functions:
       uri: function/consumerfunction
       param: 300
       http_method: GET
+    depends_on: matrixfunction

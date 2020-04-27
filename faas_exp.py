@@ -354,12 +354,12 @@ def _execute_sequential(function_dir, function):
     sequential_path = os.path.join(function_dir, 'sequential')
     _creat_dir(sequential_path)
 
-    # _execute_with_auto_scaling(
-    #     sequential_path,
-    #     function,
-    #     'sequential',
-    #     number_of_users=[1]
-    # )
+    _execute_with_auto_scaling(
+        sequential_path,
+        function,
+        'sequential',
+        number_of_users=[1]
+    )
 
     _execute_without_auto_scaling(
         sequential_path,
@@ -394,7 +394,22 @@ def _execute_parallel(function_dir, function):
     )
 
 
-def _execute_function(function, result_dir):
+def _execute_function(function, result_dir, func_dep=None):
+    if func_dep:
+        # Deploy function
+        _deploy_function(
+            function['yaml_path'],
+            env=function.get('environment')
+        )
+        endpoint = _get_function_endpoint(function)
+        _wait_function_status_code(
+            endpoint['endpoint'],
+            endpoint['http_method'],
+            stop_status=[200],
+            check_status=[404],
+            data=function.get('data')
+        )
+
     logger.info('Start executing function {}'.format(function['name']))
     # This is the result directory where the result will be dumped
     function_result_path = os.path.join(result_dir, function['name'])
@@ -402,7 +417,7 @@ def _execute_function(function, result_dir):
     _creat_dir(function_result_path)
 
     _execute_sequential(function_result_path, function)
-    #_execute_parallel(function_result_path, function)
+    _execute_parallel(function_result_path, function)
 
 
 def execute_experiment():
@@ -410,8 +425,11 @@ def execute_experiment():
     # Create a the main directory which holds all function results
     _creat_dir(result_dir)
     functions = config['functions']
+    func_dep = None
     for func in functions:
-        _execute_function(func, result_dir)
+        if func.get('depends_on'):
+            func_dep = func['depends_on']
+        _execute_function(func, result_dir, func_dep=func_dep)
 
 
 @click.group()

@@ -55,7 +55,9 @@ function deployOpenFaas(){
     --set generateBasicAuth=false \
     --set basic_auth=false \
     --set ingress.enabled=true \
-    --set faasIdler.dryRun=false
+    --set faasIdler.dryRun=false \
+    --set faasIdler.inactivityDuration=15m
+
 
  PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)
 
