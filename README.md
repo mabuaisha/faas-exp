@@ -1,2 +1,2 @@
 # faas-exp
-OpenFaas Configuration on Nomad  Cluster in Openstack Using Terraform
+Automate Openfaas Serverless on 3 differnete container orchestration frameworks (Kubernetes, Docker Swarm, Nomad)  
