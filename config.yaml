@@ -18,7 +18,7 @@ functions:
   - name: fibfunction
     cold_start: true
     # This is must be set as 15m just like we configure for idler on docker swarm and k8s
-    inactivity_duration: 15
+    inactivity_duration: 17
     yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
     environment:
       read_timeout: 5m5s

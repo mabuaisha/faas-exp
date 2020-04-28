@@ -186,13 +186,14 @@ def _generate_jmeter_jmx_file(function):
         JMETER_DIR, 'jmx/faas.jmx.j2'
     )
     path = '${__P(path)}'
-    if function.get('param'):
-        min_param = function['param'].setdefault('min', '1')
-        max_param = function['param'].setdefault('max', '3')
-        path = '{path}?param=${__Random({min_param},{max_param})}' \
-               ''.format(path=path,
-                         min_param=min_param,
-                         max_param=max_param)
+    if function['api'].get('param'):
+        param = function['api']['param']
+        min_param = param.setdefault('min', '1')
+        max_param = param.setdefault('max', '3')
+        path = '{0}?param=${{__Random({1},{2})}}' \
+               ''.format(path,
+                         min_param,
+                         max_param)
 
     context = {
         'path': path
@@ -302,6 +303,14 @@ def _execute_with_auto_scaling(function_dir,
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(user_path, str(run_number))
             _creat_dir(run_path)
+            # Before hitting the function pause for the time specified on
+            # inactivity_duration
+            if function.get('cold_start'):
+                idle_time = function.setdefault('inactivity_duration', 15)
+                logger.info('Cold start is enabled,'
+                            ' will wait {0}m'.format(idle_time))
+                time.sleep(int(idle_time) * 60)
+
             _run_load_test(function, prop_file, run_path)
 
     _remove_function(function_name)
@@ -364,6 +373,13 @@ def _execute_without_auto_scaling(function_dir,
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(replica_path, str(run_number))
             _creat_dir(run_path)
+            # Before hitting the function pause for the time specified on
+            # inactivity_duration
+            if function.get('cold_start'):
+                idle_time = function.setdefault('inactivity_duration', 15)
+                logger.info('Cold start is enabled,'
+                            ' will wait {0}m'.format(idle_time))
+                time.sleep(int(idle_time) * 60)
             _run_load_test(function, prop_file, run_path)
 
         _remove_function(function_name)
