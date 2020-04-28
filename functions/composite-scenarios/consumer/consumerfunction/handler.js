@@ -12,7 +12,6 @@ let doRequest = function(url) {
        console.log(result);
   } else {
       result = 'unable to call matrixfunction';
-      console.log(body)
   }
   res['statusCode'] = statusCode;
   res['result'] = result;
@@ -20,8 +19,6 @@ let doRequest = function(url) {
 };
 
 module.exports = async(event, context, callback) => {
-  console.log(event);
-  console.log(context);
   const gateway_endpoint = process.env.gateway_endpoint;
 
   if (!gateway_endpoint) {

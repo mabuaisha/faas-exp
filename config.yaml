@@ -2,7 +2,7 @@ experiment:
   server: gateway.openfaas.local
   port: 80
   number_of_runs: 1
-  number_of_requests: 1000
+  number_of_requests: 100
   replicas:
     - 1
     - 10
@@ -25,7 +25,11 @@ functions:
       write_timeout: 5m5s
     api:
       uri: function/fibfunction
-      param: 25
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 5
+        max: 40
       http_method: GET
 
   - name: gofunction
@@ -83,6 +87,9 @@ functions:
         like Aldus PageMaker including versions of Lorem Ipsum.
 
 
+
+
+
   - name: matrixfunction
     yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
     environment:
@@ -90,7 +97,11 @@ functions:
       write_timeout: 5m5s
     api:
       uri: function/matrixfunction
-      param: 300
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 10
+        max: 800
       http_method: GET
 
   - name: ftpfunction
@@ -113,9 +124,14 @@ functions:
     environment:
       read_timeout: 5m5s
       write_timeout: 5m5s
+      write_debug: true
       gateway_endpoint: http://gateway.openfaas:8080
     api:
       uri: function/consumerfunction
-      param: 300
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 10
+        max: 800
       http_method: GET
     depends_on: matrixfunction

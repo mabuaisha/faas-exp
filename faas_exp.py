@@ -84,8 +84,9 @@ def _get_function_endpoint(function):
     }
     uri_path = function['api']['uri']
     if function['api'].get('param'):
+        param = function['api']['param'].setdefault('min', '1')
         uri_path = '{path}?param={param}'.format(
-            path=uri_path, param=function['api']['param'])
+            path=uri_path, param=param)
 
     endpoint = 'http://{server}:{port}/{uri_path}'.format(
         server=experiment['server'],
@@ -94,6 +95,14 @@ def _get_function_endpoint(function):
     )
     func['endpoint'] = endpoint
     return func
+
+
+def _get_dependency_function(function_name):
+    for function in config['functions']:
+        if function['name'] == function_name:
+            return function
+
+    return None
 
 
 def _wait_function_status_code(
@@ -135,6 +144,19 @@ def _wait_function_status_code(
     return ready
 
 
+def _generate_file_from_template(context, template_path, generated_path):
+    template_name = template_path.rsplit('/', 1)[1]
+    template_path = template_path.rsplit('/', 1)[0]
+    env = Environment(
+        autoescape=False,
+        trim_blocks=False,
+        loader=FileSystemLoader(template_path)
+    )
+    content = env.get_template(template_name).render(context)
+    with open(generated_path, 'w') as f:
+        f.write(content)
+
+
 def _generate_jmeter_properties_file(function, number_of_users):
     template_path = os.path.join(
         JMETER_DIR, 'properties/config.properties.j2'
@@ -150,26 +172,34 @@ def _generate_jmeter_properties_file(function, number_of_users):
         'path': function['api']['uri']
     }
 
-    if function['api'].get('param'):
-        context['path'] = '{path}?param={param}'.format(
-            path=context['path'], param=function['api']['param'])
-
     if function.get('data'):
         context['data'] = function['data']
 
-    template_name = template_path.rsplit('/', 1)[1]
-    template_path = template_path.rsplit('/', 1)[0]
-    env = Environment(
-        autoescape=False,
-        trim_blocks=False,
-        loader=FileSystemLoader(template_path)
-    )
-    content = env.get_template(template_name).render(context)
     prop_file = os.path.join(JMETER_DIR, 'properties/config.properties')
-    with open(prop_file, 'w') as f:
-        f.write(content)
-
+    _generate_file_from_template(context, template_path, prop_file)
     return prop_file
+
+
+def _generate_jmeter_jmx_file(function):
+    # This will passed to the jmx file if no param passed
+    template_path = os.path.join(
+        JMETER_DIR, 'jmx/faas.jmx.j2'
+    )
+    path = '${__P(path)}'
+    if function.get('param'):
+        min_param = function['param'].setdefault('min', '1')
+        max_param = function['param'].setdefault('max', '3')
+        path = '{path}?param=${__Random({min_param},{max_param})}' \
+               ''.format(path=path,
+                         min_param=min_param,
+                         max_param=max_param)
+
+    context = {
+        'path': path
+    }
+    jmx_file = os.path.join(JMETER_DIR, 'jmx/faas.jmx')
+    _generate_file_from_template(context, template_path, jmx_file)
+    return jmx_file
 
 
 def _deploy_function(function_path, labels=None, env=None):
@@ -213,10 +243,10 @@ def _remove_function(name):
     logger.info('Remove function {0} successfully'.format(name))
 
 
-def _run_load_test(properties_path, result_path):
+def _run_load_test(function, properties_path, result_path):
     result_path = os.path.join(result_path, 'results')
     summary_result = os.path.join(os.path.dirname(result_path), 'summary.jtl')
-    jmx_path = os.path.join(JMETER_DIR, 'jmx/faas.jmx')
+    jmx_path = _generate_jmeter_jmx_file(function)
     command = 'jmeter -n -t {jmx_path}' \
               ' -p {properties_path}' \
               ' -l {summary_result} -e -o {result_path}' \
@@ -272,7 +302,7 @@ def _execute_with_auto_scaling(function_dir,
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(user_path, str(run_number))
             _creat_dir(run_path)
-            _run_load_test(prop_file, run_path)
+            _run_load_test(function, prop_file, run_path)
 
     _remove_function(function_name)
     _wait_function_status_code(
@@ -334,7 +364,7 @@ def _execute_without_auto_scaling(function_dir,
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(replica_path, str(run_number))
             _creat_dir(run_path)
-            _run_load_test(prop_file, run_path)
+            _run_load_test(function, prop_file, run_path)
 
         _remove_function(function_name)
         # wait before checking if the function removed or not
@@ -396,18 +426,19 @@ def _execute_parallel(function_dir, function):
 
 def _execute_function(function, result_dir, func_dep=None):
     if func_dep:
+        func_dep = _get_dependency_function(func_dep)
         # Deploy function
         _deploy_function(
-            function['yaml_path'],
-            env=function.get('environment')
+            func_dep['yaml_path'],
+            env=func_dep.get('environment')
         )
-        endpoint = _get_function_endpoint(function)
+        endpoint = _get_function_endpoint(func_dep)
         _wait_function_status_code(
             endpoint['endpoint'],
             endpoint['http_method'],
             stop_status=[200],
             check_status=[404],
-            data=function.get('data')
+            data=func_dep.get('data')
         )
 
     logger.info('Start executing function {}'.format(function['name']))
