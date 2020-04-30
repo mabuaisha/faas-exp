@@ -308,10 +308,14 @@ def _execute_with_auto_scaling(function_dir,
             if function.get('cold_start'):
                 idle_time = function.setdefault('inactivity_duration', 15)
                 logger.info('Cold start is enabled,'
-                            ' will wait {0}m'.format(idle_time))
+                            ' will wait {0} minutes'.format(idle_time))
                 time.sleep(int(idle_time) * 60)
 
             _run_load_test(function, prop_file, run_path)
+            # Before move to the next run wait a little bit
+            delay = _get_experiment_config()['delay_between_runs']
+            logger.info('Wait {0} minutes before run next run'.format(delay))
+            time.sleep(int(delay) * 60)
 
     _remove_function(function_name)
     _wait_function_status_code(
@@ -378,9 +382,12 @@ def _execute_without_auto_scaling(function_dir,
             if function.get('cold_start'):
                 idle_time = function.setdefault('inactivity_duration', 15)
                 logger.info('Cold start is enabled,'
-                            ' will wait {0}m'.format(idle_time))
+                            ' will wait {0} minutes'.format(idle_time))
                 time.sleep(int(idle_time) * 60)
             _run_load_test(function, prop_file, run_path)
+            delay = _get_experiment_config()['delay_between_runs']
+            logger.info('Wait {0} minutes before run next run'.format(delay))
+            time.sleep(int(delay) * 60)
 
         _remove_function(function_name)
         # wait before checking if the function removed or not

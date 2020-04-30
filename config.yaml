@@ -2,16 +2,17 @@ experiment:
   server: gateway.openfaas.local
   port: 80
   number_of_runs: 1
-  number_of_requests: 100
+  number_of_requests: 50000
+  delay_between_runs: 2
   replicas:
     - 1
     - 10
     - 20
   concurrency:
-    - 2
     - 5
-    - 15
-    - 25
+    - 10
+    - 20
+    - 50
   result_dir: /home/centos/result
 
 functions:
