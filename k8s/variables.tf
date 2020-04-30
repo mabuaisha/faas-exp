@@ -38,7 +38,7 @@ variable "allowed_cidr" {
 }
 
 variable "flavor" {
-  default = "m1.medium"
+  default = "m1.large"
 }
 
 variable "image" {
