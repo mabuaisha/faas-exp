@@ -16,22 +16,22 @@ experiment:
   result_dir: /home/centos/result
 
 functions:
-  - name: fibfunction
-    cold_start: true
-    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
-    inactivity_duration: 17
-    yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-    api:
-      uri: function/fibfunction
-      # The range of values that param can take from 5 - 40
-      # This min/max values will be used by the Random function provided by jmeter
-      param:
-        min: 5
-        max: 40
-      http_method: GET
+#  - name: fibfunction
+#    cold_start: true
+#    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
+#    inactivity_duration: 17
+#    yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
+#    environment:
+#      read_timeout: 5m5s
+#      write_timeout: 5m5s
+#    api:
+#      uri: function/fibfunction
+#      # The range of values that param can take from 5 - 40
+#      # This min/max values will be used by the Random function provided by jmeter
+#      param:
+#        min: 5
+#        max: 40
+#      http_method: GET
 
   - name: gofunction
     yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
