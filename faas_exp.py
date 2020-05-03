@@ -407,12 +407,12 @@ def _execute_sequential(function_dir, function):
     sequential_path = os.path.join(function_dir, 'sequential')
     _creat_dir(sequential_path)
 
-    _execute_with_auto_scaling(
-        sequential_path,
-        function,
-        'sequential',
-        number_of_users=[1]
-    )
+    # _execute_with_auto_scaling(
+    #     sequential_path,
+    #     function,
+    #     'sequential',
+    #     number_of_users=[1]
+    # )
 
     _execute_without_auto_scaling(
         sequential_path,
@@ -484,6 +484,8 @@ def execute_experiment():
         if func.get('depends_on'):
             func_dep = func['depends_on']
         _execute_function(func, result_dir, func_dep=func_dep)
+        logger.info('Wait 12 minutes before calling next function')
+        time.sleep(720)
 
 
 @click.group()

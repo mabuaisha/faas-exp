@@ -9,8 +9,7 @@ export DOCKER_EMAIL=${DOCKER_EMAIL}
 
 function configureKubectl(){
  scp -i /home/centos/faas_key.pem -o StrictHostKeyChecking=no centos@$MASTER_IP:/home/centos/admin.conf kubespray-do.conf
- echo 'export KUBECONFIG=$PWD/kubespray-do.conf'  >> ~/.bashrc
- source ~/.bashrc
+ export KUBECONFIG=/home/centos/kubespray-do.conf
 }
 
 function configureDockerHub(){
@@ -59,10 +58,6 @@ function deployOpenFaas(){
     --set faasIdler.dryRun=false \
     --set faasIdler.inactivityDuration=15m
 
-
- #PASSWORD=$(kubectl -n openfaas get secret basic-auth -o jsonpath="{.data.basic-auth-password}" | base64 --decode)
- echo 'export OPENFAAS_URL==http://gateway.openfaas.local'  >> ~/.bashrc
- source ~/.bashrc
 }
 
 configureKubectl

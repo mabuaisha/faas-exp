@@ -1,9 +1,9 @@
 experiment:
   server: gateway.openfaas.local
   port: 80
-  number_of_runs: 1
+  number_of_runs: 10
   number_of_requests: 50000
-  delay_between_runs: 2
+  delay_between_runs: 5
   replicas:
     - 1
     - 10
@@ -33,14 +33,14 @@ functions:
 #        max: 40
 #      http_method: GET
 
-  - name: gofunction
-    yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-    api:
-      uri: function/gofunction
-      http_method: POST
+#  - name: gofunction
+#    yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
+#    environment:
+#      read_timeout: 5m5s
+#      write_timeout: 5m5s
+#    api:
+#      uri: function/gofunction
+#      http_method: POST
 
   - name: javafunction
     yaml_path: functions/runtimes-scenarios/java/k8s/javafunction.yml
@@ -51,14 +51,14 @@ functions:
       uri: function/javafunction
       http_method: POST
 
-  - name: nodefunction
-    yaml_path: functions/runtimes-scenarios/nodejs/k8s/nodefunction.yml
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-    api:
-      uri: function/nodefunction
-      http_method: POST
+#  - name: nodefunction
+#    yaml_path: functions/runtimes-scenarios/nodejs/k8s/nodefunction.yml
+#    environment:
+#      read_timeout: 5m5s
+#      write_timeout: 5m5s
+#    api:
+#      uri: function/nodefunction
+#      http_method: POST
 
   - name: pythonfunction
     yaml_path: functions/runtimes-scenarios/python/k8s/pythonfunction.yml
