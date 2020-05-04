@@ -134,6 +134,10 @@ def _wait_function_status_code(
                 'Function endpoint {0} is on {1}'
                 ''.format(endpoint, status_code))
             break
+        elif status_code == 502:
+            logger.warning(
+                'Bad Gateway, something went wrong try again later')
+            time.sleep(10)
         else:
             raise Exception(
                 'Function {0} return'
@@ -407,13 +411,6 @@ def _execute_sequential(function_dir, function):
     sequential_path = os.path.join(function_dir, 'sequential')
     _creat_dir(sequential_path)
 
-    # _execute_with_auto_scaling(
-    #     sequential_path,
-    #     function,
-    #     'sequential',
-    #     number_of_users=[1]
-    # )
-
     _execute_without_auto_scaling(
         sequential_path,
         function,
@@ -485,7 +482,7 @@ def execute_experiment():
             func_dep = func['depends_on']
         _execute_function(func, result_dir, func_dep=func_dep)
         logger.info('Wait 12 minutes before calling next function')
-        time.sleep(720)
+        time.sleep(300)
 
 
 @click.group()
