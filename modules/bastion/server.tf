@@ -9,6 +9,13 @@ resource "openstack_compute_instance_v2" "bastion" {
     uuid = var.network_id
   }
 
+  block_device {
+    volume_size = "15"
+    source_type           = "blank"
+    destination_type      = "volume"
+    delete_on_termination = true
+  }
+
   security_groups = [
     openstack_compute_secgroup_v2.bastion.name,
     "default",
