@@ -3,7 +3,7 @@ experiment:
   port: 80
   number_of_runs: 10
   number_of_requests: 50000
-  delay_between_runs: 5
+  delay_between_runs: 1
   replicas:
     - 1
     - 10
@@ -16,31 +16,31 @@ experiment:
   result_dir: /home/centos/result
 
 functions:
-#  - name: fibfunction
-#    cold_start: true
-#    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
-#    inactivity_duration: 17
-#    yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
-#    environment:
-#      read_timeout: 5m5s
-#      write_timeout: 5m5s
-#    api:
-#      uri: function/fibfunction
-#      # The range of values that param can take from 5 - 40
-#      # This min/max values will be used by the Random function provided by jmeter
-#      param:
-#        min: 5
-#        max: 40
-#      http_method: GET
+  - name: fibfunction
+    cold_start: true
+    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
+    inactivity_duration: 17
+    yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/fibfunction
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 5
+        max: 40
+      http_method: GET
 
-#  - name: gofunction
-#    yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
-#    environment:
-#      read_timeout: 5m5s
-#      write_timeout: 5m5s
-#    api:
-#      uri: function/gofunction
-#      http_method: POST
+  - name: gofunction
+    yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/gofunction
+      http_method: POST
 
   - name: javafunction
     yaml_path: functions/runtimes-scenarios/java/k8s/javafunction.yml
@@ -51,14 +51,14 @@ functions:
       uri: function/javafunction
       http_method: POST
 
-#  - name: nodefunction
-#    yaml_path: functions/runtimes-scenarios/nodejs/k8s/nodefunction.yml
-#    environment:
-#      read_timeout: 5m5s
-#      write_timeout: 5m5s
-#    api:
-#      uri: function/nodefunction
-#      http_method: POST
+  - name: nodefunction
+    yaml_path: functions/runtimes-scenarios/nodejs/k8s/nodefunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/nodefunction
+      http_method: POST
 
   - name: pythonfunction
     yaml_path: functions/runtimes-scenarios/python/k8s/pythonfunction.yml
@@ -89,8 +89,7 @@ functions:
 
 
 
-
-
+# not done
   - name: matrixfunction
     yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
     environment:
@@ -102,7 +101,7 @@ functions:
       # This min/max values will be used by the Random function provided by jmeter
       param:
         min: 10
-        max: 800
+        max: 200
       http_method: GET
 
   - name: ftpfunction
@@ -111,7 +110,7 @@ functions:
       read_timeout: 5m5s
       write_timeout: 5m5s
       # FTP HOST
-      ftp_host: 192.168.0.6
+      ftp_host: 192.168.0.8
       # FTP user name, should match the value specified on terraform for ftp module
       ftp_user: ftpuser
       # FTP password, should match the value specified on terraform for ftp module

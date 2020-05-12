@@ -20,7 +20,7 @@ unzip terraform.zip
 sudo mv terraform /usr/local/bin/
 
 # Install Jmeter
-curl http://apache.stu.edu.tw//jmeter/binaries/apache-jmeter-5.2.1.tgz -o apache-jmeter-5.2.1.tgz
+curl http://www.gtlib.gatech.edu/pub/apache/jmeter/binaries/apache-jmeter-5.2.1.tgz -o apache-jmeter-5.2.1.tgz
 tar -xf apache-jmeter-5.2.1.tgz
 echo 'export JMETER_HOME=/home/centos/apache-jmeter-5.2.1' >> ~/.bashrc
 echo  'export PATH=$JMETER_HOME/bin:$PATH' >> ~/.bashrc
