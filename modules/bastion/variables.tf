@@ -16,9 +16,9 @@ variable "allowed_cidr" {
 }
 
 variable "flavor" {
-  default = "m1.medium"
+  default = "v2-highcpu-1"
 }
 
 variable "image" {
-  default = "CentOS-7_6-x86_64-GenericCloud"
+  default = "CentOS 7.5.1804 (x86_64) [2018-06-06]"
 }
