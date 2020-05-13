@@ -1,5 +1,5 @@
 module "network" {
-  source = "../modules/network"
+  source = "../../modules/network"
   env_name = var.env_name
   external_network_name = var.external_network_name
   subnet_cidr = var.subnet_cidr
@@ -7,7 +7,7 @@ module "network" {
 }
 
 module "bastion" {
-  source = "../modules/bastion"
+  source = "../../modules/bastion/openstack"
   env_name = var.env_name
   image = var.image
   flavor = var.flavor

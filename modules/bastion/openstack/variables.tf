@@ -16,9 +16,11 @@ variable "allowed_cidr" {
 }
 
 variable "flavor" {
-  default = "v2-highcpu-1"
+  //default = "v2-highcpu-1"
+  default = "s1-2"
 }
 
 variable "image" {
-  default = "CentOS 7.5.1804 (x86_64) [2018-06-06]"
+  //default = "CentOS 7.5.1804 (x86_64) [2018-06-06]"
+  default = "Centos 7"
 }
