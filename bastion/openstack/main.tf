@@ -1,5 +1,5 @@
 module "network" {
-  source = "../../modules/network"
+  source = "../../modules/network/openstack"
   env_name = var.env_name
   external_network_name = var.external_network_name
   subnet_cidr = var.subnet_cidr

@@ -24,3 +24,4 @@ out/
 
 template
 build
+.env
