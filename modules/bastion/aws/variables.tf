@@ -26,7 +26,3 @@ variable "volume_size" {
 variable "instance_type" {
   default = "t3a.small"
 }
-
-variable "image" {
-  default = "CentOS 7 (x86_64) - with Updates HVM"
-}

@@ -10,10 +10,10 @@ module "network" {
 module "bastion" {
   source = "../../modules/bastion/aws"
   env_name = var.env_name
-  image = var.image
+  image_id = var.image_id
   instance_type = var.instance_type
   vpc_id = module.network.vpc_id
-  subnet_id = module.network.public_subnet_id
+  subnet_id = module.network.private_subnet_id
   public_key = var.public_key
   private_key = var.private_key
 }

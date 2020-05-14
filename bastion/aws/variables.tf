@@ -43,6 +43,6 @@ variable "instance_type" {
   default = "t3a.small"
 }
 
-variable "image" {
-  default = "CentOS 7 (x86_64) - with Updates HVM"
+variable "image_id" {
+  default = "ami-0affd4508a5d2481b"
 }

@@ -1,44 +1,36 @@
-resource "openstack_compute_servergroup_v2" "server_group" {
-  name = var.server_group
-  policies = var.server_group_policies
+resource "aws_instance" "master" {
+  count                  = var.master_count
+  ami                    = var.image_id
+  instance_type          = var.instance_type
+  key_name               = "${var.env_name}-keypair"
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.security_group_ids
+  tags = {
+    Name = "${var.env_name}-master-${var.worker_name}-${count.index}"
+  }
+  root_block_device {
+    volume_size = var.volume_size
+    volume_type = "standard"
+    delete_on_termination = true
+  }
 }
 
-resource "openstack_compute_instance_v2" "master" {
-  count             = var.master_count
-  name              = "${var.env_name}-master-${var.worker_name}-${count.index}"
-  flavor_name       = var.server_flavor
-  image_name        = var.server_image
-  key_pair          = "${var.env_name}-keypair"
 
-  scheduler_hints {
-    group = openstack_compute_servergroup_v2.server_group.id
+resource "aws_instance" "worker" {
+  count                  = var.worker_count
+  ami                    = var.image_id
+  instance_type          = var.instance_type
+  key_name               = "${var.env_name}-keypair"
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.security_group_ids
+  tags = {
+    Name = "${var.env_name}-worker-${var.worker_name}-${count.index}"
   }
-
-  network {
-    uuid = var.network_id
+  root_block_device {
+    volume_size = var.volume_size
+    volume_type = "standard"
+    delete_on_termination = true
   }
-
-  security_groups = var.security_group_ids
-
-}
-
-resource "openstack_compute_instance_v2" "worker" {
-  count             = var.worker_count
-  name              = "${var.env_name}-worker-${var.worker_name}-${count.index}"
-  flavor_name       = var.server_flavor
-  image_name        = var.server_image
-  key_pair          = "${var.env_name}-keypair"
-
-  scheduler_hints {
-    group = openstack_compute_servergroup_v2.server_group.id
-  }
-
-  network {
-    uuid = var.network_id
-  }
-
-  security_groups = var.security_group_ids
-
 }
 
 resource "null_resource" "cluster" {
@@ -60,17 +52,18 @@ resource "null_resource" "cluster" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/inventory.yml.tpl",
+    content = templatefile("${path.module}/../templates/inventory.yml.tpl",
     {
-      worker_ips = openstack_compute_instance_v2.worker.*.network.0.fixed_ip_v4
-      master_ips = openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4
+
+      worker_ips = aws_instance.worker.*.private_ip
+      master_ips = aws_instance.master.*.private_ip
     }
     )
     destination     = "/home/centos/inventory.yml"
   }
 
   provisioner "file" {
-    source = "${path.module}/scripts/setup_cluster.sh"
+    source = "${path.module}/../scripts/setup_cluster.sh"
     destination = "/home/centos/setup_cluster.sh"
   }
 
@@ -82,12 +75,12 @@ resource "null_resource" "cluster" {
     ]
   }
 
-  depends_on = [openstack_compute_instance_v2.worker, openstack_compute_instance_v2.master]
+  depends_on = [aws_instance.worker, aws_instance.master]
 }
 
 resource "null_resource" "kubeconfig" {
    connection {
-    host = openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4[0]
+    host = aws_instance.master.*.private_ip[0]
     agent = "true"
     type = "ssh"
     user = "centos"
@@ -114,12 +107,12 @@ resource "null_resource" "openfaas" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/deploy_openfaas.sh.tpl",
+    content = templatefile("${path.module}/../templates/deploy_openfaas.sh.tpl",
     {
       DOCKER_USERNAME = var.docker_username
       DOCKER_PASSWORD = var.docker_password
       DOCKER_EMAIL = var.docker_email
-      MASTER_IP = openstack_compute_instance_v2.master.*.network.0.fixed_ip_v4[0]
+      MASTER_IP = aws_instance.master.*.private_ip[0]
     }
     )
     destination     = "/home/centos/deploy_openfaas.sh"
