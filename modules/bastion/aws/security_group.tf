@@ -4,23 +4,21 @@ resource "aws_security_group" "bastion" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "Allow Ingress 22"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = var.allowed_cidr
   }
 
   egress {
-    description = "Allow Egress 22"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = var.allowed_cidr
   }
 
 
   tags = {
-    Name = "bastion-ssh"
+    Name = "bastion-secuirty-group"
   }
 }

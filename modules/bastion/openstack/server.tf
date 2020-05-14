@@ -43,7 +43,7 @@ resource "null_resource" "bastion_packages" {
   }
 
   provisioner "file" {
-   source = "${path.module}/scripts/setup_bastion.sh"
+   source = "${path.module}/../scripts/setup_bastion.sh"
    destination = "/home/centos/setup_bastion.sh"
   }
 

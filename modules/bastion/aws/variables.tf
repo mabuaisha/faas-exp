@@ -6,6 +6,10 @@ variable "public_key" {}
 
 variable "private_key" {}
 
+variable "image_id" {
+  default = "ami-0affd4508a5d2481b"
+}
+
 variable "env_name" {
   default = "serverless-env"
 }
