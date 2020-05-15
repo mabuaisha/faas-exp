@@ -21,6 +21,11 @@ resource "aws_instance" "manager" {
   tags = {
     Name = "${var.env_name}-manager-${var.worker_name}"
   }
+  root_block_device {
+    volume_size = var.volume_size
+    volume_type = "standard"
+    delete_on_termination = true
+  }
   connection {
     host = self.private_ip
     agent = "true"
@@ -88,6 +93,11 @@ resource "aws_instance" "worker" {
   vpc_security_group_ids = var.security_group_ids
   tags = {
     Name = "${var.env_name}-worker-${var.worker_name}-${count.index}"
+  }
+  root_block_device {
+    volume_size = var.volume_size
+    volume_type = "standard"
+    delete_on_termination = true
   }
 
   connection {

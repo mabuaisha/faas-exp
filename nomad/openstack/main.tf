@@ -1,5 +1,5 @@
 module "nomad_servers" {
-  source = "../modules/nomad"
+  source = "../../modules/nomad/openstack"
   agent_type = "server"
   private_key = var.private_key
   bastion_ip = var.bastion_ip
@@ -16,7 +16,7 @@ module "nomad_servers" {
 }
 
 module "nomad_clients" {
-  source = "../modules/nomad"
+  source = "../../modules/nomad/openstack"
   agent_type = "client"
   private_key = var.private_key
   bastion_ip = var.bastion_ip

@@ -4,6 +4,7 @@ module "swarm-cluster" {
   worker_name = var.worker_name
   bastion_ip = var.bastion_ip
   image_id = var.image_id
+  volume_size = var.volume_size
   instance_type = var.instance_type
   private_key = var.private_key
   subnet_id = var.subnet_id
