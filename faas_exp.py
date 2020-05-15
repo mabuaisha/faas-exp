@@ -481,8 +481,8 @@ def execute_experiment():
         if func.get('depends_on'):
             func_dep = func['depends_on']
         _execute_function(func, result_dir, func_dep=func_dep)
-        logger.info('Wait 12 minutes before calling next function')
-        time.sleep(300)
+        logger.info('Wait 2 minutes before calling next function')
+        time.sleep(120)
 
 
 @click.group()

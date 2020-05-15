@@ -34,7 +34,7 @@ resource "null_resource" "ftp_packages" {
 
   provisioner "file" {
 
-    content = templatefile("${path.module}/templates/setup_ftp.sh.tpl",
+    content = templatefile("${path.module}/../templates/setup_ftp.sh.tpl",
     {
       ftp_username = var.ftp_username
       ftp_password = var.ftp_password
@@ -44,7 +44,7 @@ resource "null_resource" "ftp_packages" {
   }
 
   provisioner "file" {
-   source = "${path.module}/templates/vsftpd.conf"
+   source = "${path.module}/../templates/vsftpd.conf"
    destination = "/home/centos/vsftpd.conf"
   }
 

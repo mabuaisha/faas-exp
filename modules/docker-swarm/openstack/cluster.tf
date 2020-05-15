@@ -3,8 +3,8 @@ data "external" "cluster_token" {
     "sh",
     "${path.module}/scripts/generate-tokens.sh"]
   query = {
-    manager_host = "${openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]}"
-    bastion_host = "${var.bastion_ip}"
+    manager_host = openstack_compute_instance_v2.manager.*.network.0.fixed_ip_v4[0]
+    bastion_host = var.bastion_ip
   }
 
   depends_on = [
@@ -65,7 +65,7 @@ resource "null_resource" "manager_config" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/configure.sh.tpl",
+    content = templatefile("${path.module}/../templates/configure.sh.tpl",
     {
       docker_username = var.docker_username
       docker_password = var.docker_password
@@ -140,7 +140,7 @@ resource "null_resource" "worker_config" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/configure.sh.tpl",
+    content = templatefile("${path.module}/../templates/configure.sh.tpl",
     {
       docker_username = var.docker_username
       docker_password = var.docker_password

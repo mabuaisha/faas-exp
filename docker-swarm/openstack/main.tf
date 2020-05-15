@@ -1,5 +1,5 @@
 module "swarm-cluster" {
-  source = "../modules/docker-swarm"
+  source = "../../modules/docker-swarm/openstack"
   env_name = var.env_name
   worker_name = var.worker_name
   bastion_ip = var.bastion_ip
