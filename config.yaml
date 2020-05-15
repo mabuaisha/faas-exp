@@ -2,7 +2,7 @@ experiment:
   server: gateway.openfaas.local
   port: 80
   number_of_runs: 10
-  number_of_requests: 50000
+  number_of_requests: 40000
   delay_between_runs: 1
   replicas:
     - 1
