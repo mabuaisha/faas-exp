@@ -19,7 +19,7 @@ functions:
   - name: fibfunction
     cold_start: true
     # This is must be set as 15m just like we configure for idler on docker swarm and k8s
-    inactivity_duration: 17
+    inactivity_duration: 15
     yaml_path: functions/warm-starts-scenarios/k8s/fibfunction.yml
     environment:
       read_timeout: 5m5s
@@ -88,8 +88,6 @@ functions:
         like Aldus PageMaker including versions of Lorem Ipsum.
 
 
-
-# not done
   - name: matrixfunction
     yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
     environment:
@@ -104,20 +102,6 @@ functions:
         max: 200
       http_method: GET
 
-  - name: ftpfunction
-    yaml_path: functions/computation-scenarios/network/k8s/ftpfunction.yml
-    environment:
-      read_timeout: 5m5s
-      write_timeout: 5m5s
-      # FTP HOST
-      ftp_host: 192.168.0.8
-      # FTP user name, should match the value specified on terraform for ftp module
-      ftp_user: ftpuser
-      # FTP password, should match the value specified on terraform for ftp module
-      ftp_password: ftppassword
-    api:
-      uri: function/ftpfunction
-      http_method: GET
 
   - name: consumerfunction
     yaml_path: functions/composite-scenarios/consumer/nomad/consumerfunction.yml
@@ -135,3 +119,18 @@ functions:
         max: 800
       http_method: GET
     depends_on: matrixfunction
+
+  - name: ftpfunction
+    yaml_path: functions/computation-scenarios/network/k8s/ftpfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+      # FTP HOST
+      ftp_host: 192.168.0.8
+      # FTP user name, should match the value specified on terraform for ftp module
+      ftp_user: ftpuser
+      # FTP password, should match the value specified on terraform for ftp module
+      ftp_password: ftppassword
+    api:
+      uri: function/ftpfunction
+      http_method: GET

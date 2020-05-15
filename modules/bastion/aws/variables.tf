@@ -24,5 +24,5 @@ variable "volume_size" {
 }
 
 variable "instance_type" {
-  default = "t3a.small"
+  default = "t3a.medium"
 }
