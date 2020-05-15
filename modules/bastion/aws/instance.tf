@@ -24,6 +24,7 @@ resource "null_resource" "bastion_packages" {
     type                = "ssh"
     user                = "centos"
     private_key         = file(var.private_key)
+    timeout = "10m"
   }
 
   provisioner "file" {

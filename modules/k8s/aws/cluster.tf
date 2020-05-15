@@ -40,6 +40,7 @@ resource "null_resource" "cluster" {
     type = "ssh"
     user = "centos"
     private_key = file(var.private_key)
+    timeout = "10m"
   }
 
   provisioner "file" {
@@ -87,6 +88,7 @@ resource "null_resource" "kubeconfig" {
     private_key = file(var.private_key)
     bastion_host = var.bastion_ip
     bastion_private_key = file(var.private_key)
+    timeout = "10m"
   }
   provisioner "remote-exec" {
     inline = [
@@ -104,6 +106,7 @@ resource "null_resource" "openfaas" {
     type = "ssh"
     user = "centos"
     private_key = file(var.private_key)
+    timeout = "10m"
   }
 
   provisioner "file" {
