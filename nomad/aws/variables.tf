@@ -1,7 +1,5 @@
 variable "subnet_id" {}
 
-variable worker_name {}
-
 variable "agent_type" {}
 
 variable "bastion_ip" {}
@@ -10,6 +8,10 @@ variable "security_group_ids" { type    = list(string) }
 
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
+}
+
+variable worker_name {
+  default = "nomad"
 }
 
 variable "consul_hosts" {

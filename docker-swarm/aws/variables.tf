@@ -2,8 +2,6 @@ variable "subnet_id" {}
 
 variable "bastion_ip" {}
 
-variable "worker_name" {}
-
 variable "docker_username" {}
 
 variable "docker_password" {}
@@ -12,6 +10,10 @@ variable "security_group_ids" { type    = list(string) }
 
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
+}
+
+variable worker_name {
+  default = "docker-swarm"
 }
 
 variable "env_name" {

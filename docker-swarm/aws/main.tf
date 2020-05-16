@@ -10,5 +10,5 @@ module "swarm-cluster" {
   subnet_id = var.subnet_id
   docker_password = var.docker_password
   docker_username = var.docker_username
-  security_group_ids = security_group_ids
+  security_group_ids = var.security_group_ids
 }

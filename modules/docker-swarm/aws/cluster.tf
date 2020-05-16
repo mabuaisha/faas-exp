@@ -179,6 +179,5 @@ resource "null_resource" "faas-service" {
       "docker stack deploy func -c faas-idler.yml"
     ]
   }
-  depends_on = [
-    null_resource.worker_config]
+  depends_on = [null_resource.worker_config]
 }

@@ -3,7 +3,7 @@ locals {
 }
 
 data "template_file" "consul_server_config" {
-  template = file("${path.module}/templates/consul/${var.agent_type}.hcl.tpl")
+  template = file("${path.module}/../templates/consul/${var.agent_type}.hcl.tpl")
 
   vars = {
     instances              = var.worker_count
@@ -12,7 +12,7 @@ data "template_file" "consul_server_config" {
 }
 
 data "template_file" "nomad_server_config" {
-  template = file("${path.module}/templates/nomad/${var.agent_type}.hcl.tpl")
+  template = file("${path.module}/../templates/nomad/${var.agent_type}.hcl.tpl")
 
   vars = {
     instances              = var.worker_count
@@ -75,7 +75,7 @@ resource "null_resource" "servers_cluster" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/setup.sh.tpl",
+    content = templatefile("${path.module}/../templates/setup.sh.tpl",
     {
       server_type = var.agent_type
       consul_version = var.consul_version,
