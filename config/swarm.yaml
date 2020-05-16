@@ -1,0 +1,138 @@
+experiment:
+  server: gateway.openfaas.local
+  port: 80
+  number_of_runs: 6
+  number_of_requests: 35000
+  delay_between_runs: 1
+  replicas:
+    - 1
+    - 10
+    - 20
+  concurrency:
+    - 5
+    - 10
+    - 20
+    - 50
+  result_dir: /home/centos/result
+
+functions:
+  - name: fibfunction
+    cold_start: true
+    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
+    inactivity_duration: 15
+    yaml_path: functions/warm-starts-scenarios/common/fibfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/fibfunction
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 5
+        max: 40
+      http_method: GET
+
+  - name: gofunction
+    yaml_path: functions/runtimes-scenarios/go/common/gofunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/gofunction
+      http_method: POST
+
+  - name: javafunction
+    yaml_path: functions/runtimes-scenarios/java/common/javafunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/javafunction
+      http_method: POST
+
+  - name: nodefunction
+    yaml_path: functions/runtimes-scenarios/nodejs/common/nodefunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/nodefunction
+      http_method: POST
+
+  - name: pythonfunction
+    yaml_path: functions/runtimes-scenarios/python/common/pythonfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/pythonfunction
+      http_method: POST
+
+  - name: iofunction
+    yaml_path: functions/computation-scenarios/io/common/iofunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/iofunction
+      http_method: POST
+      data: >
+        Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+        Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
+        when an unknown printer took a galley of type and scrambled it to make a type
+        specimen book. It has survived not only five centuries, but also the leap
+        into electronic typesetting, remaining essentially unchanged.
+        It was popularised in the 1960s with the release of Letraset sheets containing
+        Lorem Ipsum passages, and more recently with desktop publishing software
+        like Aldus PageMaker including versions of Lorem Ipsum.
+
+
+
+
+
+  - name: matrixfunction
+    yaml_path: functions/computation-scenarios/matrix/common/matrixfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/matrixfunction
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 10
+        max: 200
+      http_method: GET
+
+  - name: consumerfunction
+    yaml_path: functions/composite-scenarios/consumer/swarm/consumerfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+      write_debug: true
+      gateway_endpoint: http://gateway.openfaas:8080
+    api:
+      uri: function/consumerfunction
+      # The range of values that param can take from 5 - 40
+      # This min/max values will be used by the Random function provided by jmeter
+      param:
+        min: 10
+        max: 800
+      http_method: GET
+    depends_on: matrixfunction
+
+  - name: ftpfunction
+    yaml_path: functions/computation-scenarios/network/common/ftpfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+      # FTP HOST
+      ftp_host: 10.0.2.38
+      # FTP user name, should match the value specified on terraform for ftp module
+      ftp_user: ftpuser
+      # FTP password, should match the value specified on terraform for ftp module
+      ftp_password: ftppassword
+    api:
+      uri: function/ftpfunction
+      http_method: GET
