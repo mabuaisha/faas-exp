@@ -1,7 +1,5 @@
 variable "subnet_id" {}
 
-variable "agent_type" {}
-
 variable "bastion_ip" {}
 
 variable "security_group_ids" { type    = list(string) }

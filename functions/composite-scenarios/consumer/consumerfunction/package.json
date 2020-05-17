@@ -10,6 +10,6 @@
   "author": "OpenFaaS Ltd",
   "license": "MIT",
   "dependencies": {
-    "sync-request": "^6.1.0"
+    "request": "^2.88.2"
   }
 }

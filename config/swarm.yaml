@@ -111,7 +111,7 @@ functions:
       read_timeout: 5m5s
       write_timeout: 5m5s
       write_debug: true
-      gateway_endpoint: http://gateway.openfaas:8080
+      gateway_endpoint: http://gateway:8080
     api:
       uri: function/consumerfunction
       # The range of values that param can take from 5 - 40

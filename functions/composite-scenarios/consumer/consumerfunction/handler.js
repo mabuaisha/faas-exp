@@ -1,21 +1,25 @@
-'use strict'
-const request = require('sync-request');
+'use strict';
+const request = require('request');
 
 
-let doRequest = function(url) {
+let doRequest = async function(url) {
 
-  let result = null;
-  let res = request('GET', url);
-  let statusCode = res.statusCode;
-  if (statusCode == 200) {
-       result = JSON.parse(res.getBody('utf8'));
-       console.log(result);
-  } else {
-      result = 'unable to call matrixfunction';
-  }
-  res['statusCode'] = statusCode;
-  res['result'] = result;
-  return res;
+    let result = null;
+    request(url, function (error, response, body) {
+        let statusCode = response.statusCode;
+        if (error) {
+            console.error('upload failed:', error);
+            result['statusCode'] = statusCode;
+            result['result'] = result;
+            return result
+        } else {
+            console.log(result);
+            result['statusCode'] = statusCode;
+            result['result'] = JSON.parse(response.body);
+            return result
+        }
+    });
+
 };
 
 module.exports = async(event, context, callback) => {
@@ -38,6 +42,6 @@ module.exports = async(event, context, callback) => {
   } else {
       return context.fail(res['result']);
   }
-}
+};
 
 
