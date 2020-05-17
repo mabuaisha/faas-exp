@@ -10,7 +10,7 @@ let doRequest = async function(url) {
         if (error) {
             console.error('upload failed:', error);
             result['statusCode'] = statusCode;
-            result['result'] = result;
+            result['result'] = error;
             return result
         } else {
             console.log(result);
