@@ -31,7 +31,7 @@ functions:
       param:
         min: 5
         max: 40
-      http_method: GET
+      http_method: POST
 
   - name: gofunction
     yaml_path: functions/runtimes-scenarios/go/k8s/gofunction.yml
@@ -89,7 +89,6 @@ functions:
 
 
 
-
   - name: matrixfunction
     yaml_path: functions/computation-scenarios/matrix/k8s/matrixfunction.yml
     environment:
@@ -102,23 +101,22 @@ functions:
       param:
         min: 10
         max: 200
-      http_method: GET
+      http_method: POST
 
   - name: consumerfunction
     yaml_path: functions/composite-scenarios/consumer/nomad/consumerfunction.yml
     environment:
       read_timeout: 5m5s
       write_timeout: 5m5s
-      write_debug: true
       gateway_endpoint: http://gateway.openfaas:8080
     api:
       uri: function/consumerfunction
       # The range of values that param can take from 5 - 40
       # This min/max values will be used by the Random function provided by jmeter
       param:
-        min: 10
-        max: 800
-      http_method: GET
+        min: 5
+        max: 150
+      http_method: POST
     depends_on: matrixfunction
 
   - name: ftpfunction
@@ -134,4 +132,4 @@ functions:
       ftp_password: ftppassword
     api:
       uri: function/ftpfunction
-      http_method: GET
+      http_method: POST
