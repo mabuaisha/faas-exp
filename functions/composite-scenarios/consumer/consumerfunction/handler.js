@@ -2,25 +2,32 @@
 const request = require('request');
 
 
-let doRequest = async function(url) {
-
-    let result = null;
-    request(url, function (error, response, body) {
-        let statusCode = response.statusCode;
-        if (error) {
-            console.error('upload failed:', error);
-            result['statusCode'] = statusCode;
-            result['result'] = error;
-            return result
-        } else {
-            console.log(result);
-            result['statusCode'] = statusCode;
-            result['result'] = JSON.parse(response.body);
-            return result
-        }
+function doRequest(headers, url, data) {
+  return new Promise(function (resolve, reject) {
+    request.post({
+      headers: headers,
+      url:     url,
+      body:    data
+    }, function (error, res, body) {
+      if (!error && res.statusCode == 200) {
+          console.log(body);
+          console.log(res);
+        resolve(body);
+      } else {
+         console.log(error);
+        reject(error);
+      }
     });
+  });
+}
 
-};
+async function testEntry(url) {
+  let res = await doRequest({"content-type": "text/plain"}, url, " ");
+  console.log(res);
+  console.log(res);
+  console.log('This is Mohammed');
+  return res
+}
 
 module.exports = async(event, context, callback) => {
   const gateway_endpoint = process.env.gateway_endpoint;
@@ -36,11 +43,13 @@ module.exports = async(event, context, callback) => {
   }
   // This call to a matrix function
   const url = gateway_endpoint + "/function/matrixfunction?param=" + param;
-  let res = await doRequest(url);
-  if (res['statusCode'] == 200) {
-        return context.status(res['statusCode']).succeed(res['result']);
+  let res =  await testEntry(url);
+  if (res) {
+          return context
+            .status(200)
+            .succeed(res)
   } else {
-      return context.fail(res['result']);
+      return context.fail({"result": "Error while trying to call function"});
   }
 };
 

@@ -127,7 +127,7 @@ functions:
       read_timeout: 5m5s
       write_timeout: 5m5s
       # FTP HOST
-      ftp_host: 10.0.2.38
+      ftp_host: 10.0.2.207
       # FTP user name, should match the value specified on terraform for ftp module
       ftp_user: ftpuser
       # FTP password, should match the value specified on terraform for ftp module

@@ -26,7 +26,7 @@ module.exports = async (event, context) => {
       ftpResult = 'Error on downloading file from FTP'
       result['error'] = ftpResult
   } else{
-      result['text'] = ftpResult;
+      result['status'] = 'done';
   }
 
   return context
@@ -50,11 +50,11 @@ async function ftpHandler(host, user, password) {
             flags: 'w' // 'a' means appending (old data will be preserved)
           });
         await client.downloadTo(writer, "test.txt");
-        let buffer = fs.readFileSync('/tmp/test.txt');
-        result = buffer.toString();
+        result = true
     }
     catch(err) {
         console.log(err)
+        result = false
     }
     client.close();
     return result;

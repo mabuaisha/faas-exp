@@ -111,7 +111,7 @@ functions:
     environment:
       read_timeout: 5m5s
       write_timeout: 5m5s
-      gateway_endpoint: LB_IP
+      gateway_endpoint: http://10.0.2.150
     api:
       uri: function/consumerfunction
       # The range of values that param can take from 5 - 40
@@ -128,7 +128,7 @@ functions:
       read_timeout: 5m5s
       write_timeout: 5m5s
       # FTP HOST
-      ftp_host: 10.0.2.38
+      ftp_host: 10.0.2.205
       # FTP user name, should match the value specified on terraform for ftp module
       ftp_user: ftpuser
       # FTP password, should match the value specified on terraform for ftp module
