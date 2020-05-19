@@ -58,7 +58,7 @@ function deployOpenFaas(){
     --set basic_auth=false \
     --set ingress.enabled=true \
     --set faasIdler.dryRun=false \
-    --set faasIdler.inactivityDuration=15m
+    --set faasIdler.inactivityDuration=5m
 
 }
 
