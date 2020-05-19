@@ -38,6 +38,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JMETER_DIR = os.path.join(BASE_DIR, 'jmeter')
 
 
+def _is_cold_start_enabled(function):
+    return True if \
+        function.get('inactivity_duration') \
+        and function.get('chunks_number') else False
+
+
 def _execute_command(command, cwd=None):
     subprocess_args = {
         'args': command.split(),
@@ -161,15 +167,18 @@ def _generate_file_from_template(context, template_path, generated_path):
         f.write(content)
 
 
-def _generate_jmeter_properties_file(function, number_of_users):
+def _generate_jmeter_properties_file(function,
+                                     number_of_users,
+                                     number_of_requests=None):
     template_path = os.path.join(
         JMETER_DIR, 'properties/config.properties.j2'
     )
     experiment = _get_experiment_config()
-    number_of_requesrs = experiment['number_of_requests']
+    if not number_of_requests:
+        number_of_requests = experiment['number_of_requests']
     context = {
         'number_of_users': number_of_users,
-        'loop_count': int(number_of_requesrs/number_of_users),
+        'loop_count': int(number_of_requests/number_of_users),
         'server': experiment['server'],
         'port': experiment['port'],
         'http_method': function['api']['http_method'],
@@ -307,18 +316,37 @@ def _execute_with_auto_scaling(function_dir,
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(user_path, str(run_number))
             _creat_dir(run_path)
-            # Before hitting the function pause for the time specified on
-            # inactivity_duration
-            if function.get('cold_start'):
-                idle_time = function.setdefault('inactivity_duration', 15)
-                logger.info('Cold start is enabled,'
-                            ' will wait {0} minutes'.format(idle_time))
-                time.sleep(int(idle_time) * 60)
+            if _is_cold_start_enabled(function):
+                chunks_number = int(function['chunks_number'])
+                chunk_requests = int(
+                    experiment['number_of_requests'] / chunks_number
+                )
+                for chunk in range(chunks_number):
+                    chunk_path = os.path.join(
+                        run_path, 'chunk_{0}'.format(chunk + 1)
+                    )
+                    _creat_dir(chunk_path)
+                    # Wait before sending any requests
+                    delay = int(function['inactivity_duration']) + 1
+                    time.sleep(delay * 60)
+                    logger.info(
+                        'Wait {0} minutes before run next chunk'.format(delay)
+                    )
+                    # Override the prop file
+                    prop_file = _generate_jmeter_properties_file(
+                        function,
+                        user,
+                        number_of_requests=chunk_requests
+                    )
 
-            _run_load_test(function, prop_file, run_path)
+                    _run_load_test(function, prop_file, chunk_path)
+            else:
+                _run_load_test(function, prop_file, run_path)
             # Before move to the next run wait a little bit
-            delay = _get_experiment_config()['delay_between_runs']
-            logger.info('Wait {0} minutes before run next run'.format(delay))
+            delay = experiment['delay_between_runs']
+            logger.info(
+                'Wait {0} minutes before run next run'.format(delay)
+            )
             time.sleep(int(delay) * 60)
 
     _remove_function(function_name)
@@ -381,15 +409,31 @@ def _execute_without_auto_scaling(function_dir,
             logger.info('Testing run # {}'.format(run_number))
             run_path = os.path.join(replica_path, str(run_number))
             _creat_dir(run_path)
-            # Before hitting the function pause for the time specified on
-            # inactivity_duration
-            if function.get('cold_start'):
-                idle_time = function.setdefault('inactivity_duration', 15)
-                logger.info('Cold start is enabled,'
-                            ' will wait {0} minutes'.format(idle_time))
-                time.sleep(int(idle_time) * 60)
-            _run_load_test(function, prop_file, run_path)
-            delay = _get_experiment_config()['delay_between_runs']
+            if _is_cold_start_enabled(function):
+                chunks_number = int(function['chunks_number'])
+                chunk_requests = int(
+                    experiment['number_of_requests'] / chunks_number
+                )
+                for chunk in range(chunks_number):
+                    chunk_path = os.path.join(
+                        run_path, 'chunk_{0}'.format(chunk + 1)
+                    )
+                    _creat_dir(chunk_path)
+                    # Wait before sending any requests
+                    delay = int(function['inactivity_duration']) + 1
+                    time.sleep(delay * 60)
+                    # Override the prop file
+                    prop_file = _generate_jmeter_properties_file(
+                        function,
+                        number_of_users,
+                        number_of_requests=chunk_requests
+                    )
+
+                    _run_load_test(function, prop_file, chunk_path)
+            else:
+                _run_load_test(function, prop_file, run_path)
+
+            delay = experiment['delay_between_runs']
             logger.info('Wait {0} minutes before run next run'.format(delay))
             time.sleep(int(delay) * 60)
 
