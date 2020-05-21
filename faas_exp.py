@@ -321,25 +321,29 @@ def _execute_with_auto_scaling(function_dir,
                 chunk_requests = int(
                     experiment['number_of_requests'] / chunks_number
                 )
-                for chunk in range(chunks_number):
-                    chunk_path = os.path.join(
-                        run_path, 'chunk_{0}'.format(chunk + 1)
-                    )
-                    _creat_dir(chunk_path)
-                    # Wait before sending any requests
-                    delay = int(function['inactivity_duration']) + 1
-                    time.sleep(delay * 60)
-                    logger.info(
-                        'Wait {0} minutes before run next chunk'.format(delay)
-                    )
-                    # Override the prop file
-                    prop_file = _generate_jmeter_properties_file(
-                        function,
-                        user,
-                        number_of_requests=chunk_requests
-                    )
+                for chunk in range(int(chunks_number / 2)):
+                    for index in range(2):
+                        chunk_name = "warm_{0}" \
+                            if index % 2 == 0 else "cold_{0}"
+                        chunk_name = chunk_name.format(chunk)
+                        chunk_path = os.path.join(run_path, chunk_name)
+                        _creat_dir(chunk_path)
+                        # Only wait when the chunk_name is cold
+                        if 'cold' in chunk_name:
+                            # Wait before sending any requests
+                            delay = int(function['inactivity_duration']) + 1
+                            logger.info(
+                                'Wait Cold start time {0}m'.format(delay)
+                            )
+                            time.sleep(delay * 60)
+                        # Override the prop file
+                        prop_file = _generate_jmeter_properties_file(
+                            function,
+                            user,
+                            number_of_requests=chunk_requests
+                        )
 
-                    _run_load_test(function, prop_file, chunk_path)
+                        _run_load_test(function, prop_file, chunk_path)
             else:
                 _run_load_test(function, prop_file, run_path)
             # Before move to the next run wait a little bit
@@ -415,21 +419,28 @@ def _execute_without_auto_scaling(function_dir,
                     experiment['number_of_requests'] / chunks_number
                 )
                 for chunk in range(chunks_number):
-                    chunk_path = os.path.join(
-                        run_path, 'chunk_{0}'.format(chunk + 1)
-                    )
-                    _creat_dir(chunk_path)
-                    # Wait before sending any requests
-                    delay = int(function['inactivity_duration']) + 1
-                    time.sleep(delay * 60)
-                    # Override the prop file
-                    prop_file = _generate_jmeter_properties_file(
-                        function,
-                        number_of_users,
-                        number_of_requests=chunk_requests
-                    )
+                    for index in range(2):
+                        chunk_name = "warm_{0}" \
+                            if index % 2 == 0 else "cold_{0}"
+                        chunk_name = chunk_name.format(chunk)
+                        chunk_path = os.path.join(run_path, chunk_name)
+                        _creat_dir(chunk_path)
+                        # Only wait when the chunk_name is cold
+                        if 'cold' in chunk_name:
+                            # Wait before sending any requests
+                            delay = int(function['inactivity_duration']) + 1
+                            logger.info(
+                                'Wait Cold start time {0}m'.format(delay)
+                            )
+                            time.sleep(delay * 60)
+                        # Override the prop file
+                        prop_file = _generate_jmeter_properties_file(
+                            function,
+                            number_of_users,
+                            number_of_requests=chunk_requests
+                        )
 
-                    _run_load_test(function, prop_file, chunk_path)
+                        _run_load_test(function, prop_file, chunk_path)
             else:
                 _run_load_test(function, prop_file, run_path)
 

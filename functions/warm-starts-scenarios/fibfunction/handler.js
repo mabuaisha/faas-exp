@@ -1,9 +1,7 @@
-'use strict'
+'use strict';
 
 module.exports = async (event, context) => {
   let number = event['query']['param'];
-  console.log(event);
-  console.log(context);
   number = number.replace(/\n/g, '');
 
     if (!number || !isNumeric(number)) {
