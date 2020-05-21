@@ -3,7 +3,7 @@ provider:
   name: openfaas
   gateway: http://gateway.openfaas.local
 functions:
-  fibfunction:
+  warmfunction:
     lang: node12
     handler: ./warmfunction
     image: mabuaisha/warmfunction:latest
