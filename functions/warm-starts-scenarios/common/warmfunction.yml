@@ -1,0 +1,13 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://gateway.openfaas.local
+functions:
+  fibfunction:
+    lang: node12
+    handler: ./warmfunction
+    image: mabuaisha/warmfunction:latest
+    labels:
+      com.openfaas.scale.min: 1
+      com.openfaas.scale.max: 20
+      com.openfaas.scale.zero: true
