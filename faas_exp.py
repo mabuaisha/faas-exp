@@ -581,12 +581,12 @@ def main():
 
 
 @click.command()
-@click.command('-r',
-               '--result-dir',
-               required=True)
-@click.command('-p',
-               '--package-path',
-               required=False)
+@click.option('-r',
+              '--result-dir',
+              required=True)
+@click.option('-p',
+              '--package-path',
+              required=False)
 def package(result_dir, package_path):
     if not package_path:
         package_path = os.path.join(os.getcwd(), 'result.zip')
