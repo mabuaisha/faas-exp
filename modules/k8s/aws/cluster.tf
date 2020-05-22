@@ -110,6 +110,11 @@ resource "null_resource" "openfaas" {
   }
 
   provisioner "file" {
+    source = "${path.module}/../templates/prometheus-ingress.yaml"
+    destination = "/home/centos/prometheus-ingress.yaml"
+  }
+
+  provisioner "file" {
     content = templatefile("${path.module}/../templates/deploy_openfaas.sh.tpl",
     {
       DOCKER_USERNAME = var.docker_username

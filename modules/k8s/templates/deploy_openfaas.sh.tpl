@@ -41,6 +41,9 @@ function setupIngressController(){
 
     # Create a Service for the Ingress Controller Pods
     kubectl create -f service/nodeport.yaml
+
+    # Deploy ingress for prometheus
+    kubectl create -f /home/centos/prometheus-ingress.yaml
 }
 
 function deployOpenFaas(){

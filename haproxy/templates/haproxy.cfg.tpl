@@ -35,11 +35,14 @@ frontend stats
 backend alert_manager
   balance roundrobin
   http-request set-header Host prometheus.openfaas.local
-  server worker_1 10.0.2.155:80
-  server worker_2 10.0.2.108:80
+  %{ for index, ip in backend_ips}
+    server worker_${index} ${ip}:${prometheus_backend_port}
+  %{ endfor}
+
 
 backend http_backend
   balance roundrobin
   http-request set-header Host gateway.openfaas.local
-  server worker_1 10.0.2.155:80
-  server worker_2 10.0.2.108:80
+  %{ for index, ip in backend_ips}
+    server worker_${index} ${ip}:${openfaas_backend_port}
+  %{ endfor}
