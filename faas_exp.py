@@ -418,7 +418,7 @@ def _execute_without_auto_scaling(function_dir,
                 chunk_requests = int(
                     experiment['number_of_requests'] / chunks_number
                 )
-                for chunk in range(chunks_number):
+                for chunk in range(int(chunks_number / 2)):
                     for index in range(2):
                         chunk_name = "warm_{0}" \
                             if index % 2 == 0 else "cold_{0}"
