@@ -540,29 +540,83 @@ def execute_experiment():
         time.sleep(120)
 
 
+def _validate_python_version():
+    if sys.version[0] != '3':
+        raise Exception('Python 3 not installed !!!')
+
+
+def _validate_command(command):
+    try:
+        _execute_command(command)
+    except Exception:
+        msg = 'Failed to run {0}, make sure its installed'.format(command)
+        logger.error(msg)
+        raise Exception(msg)
+
+
+def _validate_jmeter():
+    _validate_command('jmeter')
+
+
+def _validate_faas_cli():
+    _validate_command('faas-cli')
+
+
+def _validate_zip():
+    _validate_command('zip')
+
+
+def _validate_environment_variables(framework):
+    if framework == 'k8s':
+        if not os.environ.get('KUBECONFIG'):
+            raise Exception('KUBECONFIG variable is not set')
+
+    if not os.environ.get('OPENFAAS_URL'):
+        raise Exception('OPENFAAS_URL variable is not set')
+
+
 @click.group()
 def main():
     pass
 
 
 @click.command()
-def validate():
-    pass
+@click.command('-r',
+               '--result-dir',
+               required=True)
+@click.command('-p',
+               '--package-path',
+               required=False)
+def package(result_dir, package_path):
+    if not package_path:
+        package_path = os.path.join(os.getcwd(), 'result.zip')
+
+    _execute_command('zip -r {0} {1}'.format(package_path, result_dir))
 
 
 @click.command()
-def clean():
-    pass
+@click.option('-f',
+              '--framework',
+              required=True,
+              choices=click.option([]))
+def validate(framework):
+    _validate_python_version()
+    _validate_jmeter()
+    _validate_faas_cli()
+    _validate_zip()
+    _validate_environment_variables(framework)
 
 
 @click.command()
-@click.option('-c', '--config-file', required=True,
-              help='This command to start running test cases')
+@click.option('-c',
+              '--config-file',
+              required=True,
+              help='Path to configuration file for experiment')
 def run(config_file):
     config.load_config(config_file)
     execute_experiment()
 
 
 main.add_command(run)
-main.add_command(clean)
+main.add_command(package)
 main.add_command(validate)
