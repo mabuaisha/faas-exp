@@ -227,7 +227,7 @@ The following inputs are used to create nomad resource resource on AWS as specif
 - `nomad_version`: The nomad version used for this experiment. The default value is `0.8.4`.  
 
 
-#### Openstack
+##### Openstack
 
 The following inputs are used to create nomad resource resource on Openstack as specified on the [variables](/nomad/openstack/variables.tf) file:
 
@@ -246,7 +246,77 @@ The following inputs are used to create nomad resource resource on Openstack as 
 - `consul_version`: The consul version used for this experiment. The default value is `1.2.0`.
 - `nomad_version`: The nomad version used for this experiment. The default value is `0.8.4`.
 
+For both AWS & Openstack run the following commands:
+
+```
+terraform init
+terraform apply -var-file=inputs.tfvars
+
+```
+
+`inputs.tfvars` should be created to fill the required values and override any default value.
+
+Terraform outputs
+```
+server-ips = [10.0.2.111]
+client-ips = [10.0.2.112, 10.0.2.130]
+```
+
 #### Kubernetes
+
+This module is used in order to create k8s cluster and deploy OpenFaas Serverless chart to the cluster. The k8s cluster is 1 master and 2 node workers.
+ 
+##### AWS
+
+The following inputs are used to create k8s resource resource on AWS as specified on the [variables](/k8s/aws/variables.tf) file:
+
+- `subnet_id`: The private subent id. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `docker_username`: The dockerhub username. Required
+- `docker_password`: The dockerhub password. Required
+- `docker_email`: The dockerhub email. Required
+- `security_group_ids`: The list of security group ids. Required
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `worker_name`: The worker name. The default value is `k8s`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `master_count`: The number of k8s master. The default value is `1`.
+- `worker_count`: The number of clients. The default value is `2`.
+- `volume_size`: The volume size for bastion instance. The default value is `15` GB.
+- `instance_type`: The instance type for AWS. The default value is `t3a.large`.
+- `image_id`: The image id where instance is creating from. The default value is `ami-0affd4508a5d2481b` (Centos 7.6)
+
+
+##### Openstack
+
+The following inputs are used to create k8s resource resource on Openstack as specified on the [variables](/k8s/openstack/variables.tf) file:
+
+- `network_id`:The network id where bastion resourced created in. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `docker_username`: The dockerhub username. Required
+- `docker_password`: The dockerhub password. Required
+- `docker_email`: The dockerhub email. Required
+- `flavor`: The type of the machine need to be created. (Required) Flavor is a custom in Openstack and varies from provider to provider.
+- `image`: The image type where instance is going to be created. (Required) This project use Centos and the name varies from from provider to provider.
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `worker_name`: The worker name. The default value is `k8s`.
+
+For both AWS & Openstack run the following commands:
+
+```
+terraform init
+terraform apply -var-file=inputs.tfvars
+
+```
+
+`inputs.tfvars` should be created to fill the required values and override any default value.
+
+Terraform outputs
+```
+master-ips = [10.0.2.111]
+worker-ip = [10.0.2.112, 10.0.2.130]
+```
+
 #### HAproxy
 #### FTP
 
