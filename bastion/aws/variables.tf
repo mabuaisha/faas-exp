@@ -30,11 +30,6 @@ variable "env_name" {
 }
 
 
-variable "allowed_cidr" {
-  description = "A CIDR range of IP addresses which are allowed to SSH to the bastion host."
-  default     = ["0.0.0.0/0"]
-}
-
 variable "volume_size" {
   default = "15"
 }
