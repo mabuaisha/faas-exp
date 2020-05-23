@@ -24,10 +24,10 @@ variable "env_name" {
 }
 
 variable "volume_size" {
-  default = "15"
+  default = "12"
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  default = "t3a.medium"
 }
 

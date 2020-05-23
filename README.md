@@ -317,7 +317,58 @@ master-ips = [10.0.2.111]
 worker-ip = [10.0.2.112, 10.0.2.130]
 ```
 
-#### HAproxy
+#### HAProxy
+
+This module is used to create HAProxy as Load balancer to forward the requests to the desired cluster.
+
+The Openfaas Gateway IP will represent the HAProxy IP and from there the Load balancer will forward the requests.
+
+##### AWS
+
+The following inputs are used to create HAProxy resource resource on AWS as specified on the [variables](/haproxy/aws/variables.tf) file:
+
+- `subnet_id`: The private subent id. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `backend_ips`: The list of backend ips that HAProxy will forward requests to. Usually is the list of workers. Required
+- `security_group_ids`: The list of security group ids. Required
+- `openfaas_backend_port`: The port that Openfaas gateway listen. The default value is 8080 Except k8s it will be 80.
+- `prometheus_backend_port`: The port that prometheus listen to. The default value is 9000. 
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `volume_size`: The volume size for bastion instance. The default value is `12` GB.
+- `instance_type`: The instance type for AWS. The default value is `t3a.medium`.
+- `image_id`: The image id where instance is creating from. The default value is `ami-0affd4508a5d2481b` (Centos 7.6)
+
+
+##### Openstack 
+
+The following inputs are used to create HAProxy resource resource on Openstack as specified on the [variables](/haproxy/openstack/variables.tf) file:
+
+- `network_id`:The network id where bastion resourced created in. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `backend_ips`: The list of backend ips that HAProxy will forward requests to. Usually is the list of workers. Required
+- `openfaas_backend_port`: The port that Openfaas gateway listen. The default value is 8080 Except k8s it will be 80.
+- `prometheus_backend_port`: The port that prometheus listen to. The default value is 9000. 
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `flavor`: The type of the machine need to be created. (Required) Flavor is a custom in Openstack and varies from provider to provider.
+- `image`: The image type where instance is going to be created. (Required) This project use Centos and the name varies from from provider to provider.
+
+For both AWS & Openstack run the following commands:
+
+```
+terraform init
+terraform apply -var-file=inputs.tfvars
+
+```
+
+`inputs.tfvars` should be created to fill the required values and override any default value.
+
+Terraform outputs
+```
+private_ip = 10.0.2.109]
+```
+
 #### FTP
 
 ## Part2
