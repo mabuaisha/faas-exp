@@ -426,3 +426,29 @@ Notes:
 
 ## Part2
 
+This part is the one responsible for conducting experiment on specified container orchestrators. Where each experiment represent running all test cases in single orchestrator.
+
+### Prerequisites
+
+1. Make ssh connection to the bastion `ssh -i ~/.ssh/faas_sh centos@BASTION_IP
+2. Run `pyenv activate faas` Where the pyenv and virtaulenv created as part of bastion setup.
+3. Clone `faas-exp` repository `git clone https://github.com/mabuaisha/faas-exp.git`
+4. Change directory to `faas-exp`
+5. Install all python requirements using `pip install -e .`
+6. Make sure that your application is setup correctly by invoking `faas-exp` you should see something like this
+
+```
+(faas-exp) ➜  faas-exp git:(master) ✗ faas-exp
+Usage: faas-exp [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  package
+  run
+  validate
+
+```
+    
+

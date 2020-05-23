@@ -598,7 +598,7 @@ def package(result_dir, package_path):
 @click.option('-f',
               '--framework',
               required=True,
-              choices=click.option([]))
+              type=click.Choice(['k8s', 'swarm', 'nomad']))
 def validate(framework):
     _validate_python_version()
     _validate_jmeter()
