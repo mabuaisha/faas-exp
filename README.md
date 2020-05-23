@@ -451,11 +451,14 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  package
   run
   validate
 
 ```
+
+The `faas-exp` supports the following command:
+1. `faas-exp validate`. This command will validate that your ready to run your experiment.
+2. `faas-exp run -c config.yaml`. This command will start running actual experiment.
 
 ### Configuration
 

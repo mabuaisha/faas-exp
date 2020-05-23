@@ -44,7 +44,7 @@ def _is_cold_start_enabled(function):
         and function.get('chunks_number') else False
 
 
-def _execute_command(command, cwd=None):
+def _execute_command(command, cwd=None, ignore_log=False):
     subprocess_args = {
         'args': command.split(),
         'stdout': subprocess.PIPE,
@@ -52,14 +52,16 @@ def _execute_command(command, cwd=None):
         'cwd': cwd
     }
 
-    logger.debug('Running command {0}.'.format(command))
+    if not ignore_log:
+        logger.debug('Running command {0}.'.format(command))
 
     process = subprocess.Popen(**subprocess_args)
     output, error = process.communicate()
-    logger.info('command: {0} '.format(repr(command)))
-    logger.info('output: {0} '.format(output.decode('utf-8')))
-    logger.error('error: {0} '.format(error.decode('utf-8')))
-    logger.info('process.returncode: {0} '.format(process.returncode))
+    if not ignore_log:
+        logger.info('command: {0} '.format(repr(command)))
+        logger.info('output: {0} '.format(output.decode('utf-8')))
+        logger.error('error: {0} '.format(error.decode('utf-8')))
+        logger.info('process.returncode: {0} '.format(process.returncode))
 
     if process.returncode:
         return False
@@ -547,7 +549,7 @@ def _validate_python_version():
 
 def _validate_command(command):
     try:
-        _execute_command(command)
+        _execute_command(command, ignore_log=True)
     except Exception:
         msg = 'Failed to run {0}, make sure its installed'.format(command)
         logger.error(msg)
@@ -555,15 +557,15 @@ def _validate_command(command):
 
 
 def _validate_jmeter():
-    _validate_command('jmeter')
+    _validate_command('which jmeter')
 
 
 def _validate_faas_cli():
-    _validate_command('faas-cli')
+    _validate_command('which faas-cli')
 
 
 def _validate_zip():
-    _validate_command('zip')
+    _validate_command('which zip')
 
 
 def _validate_environment_variables(framework):
@@ -581,20 +583,6 @@ def main():
 
 
 @click.command()
-@click.option('-r',
-              '--result-dir',
-              required=True)
-@click.option('-p',
-              '--package-path',
-              required=False)
-def package(result_dir, package_path):
-    if not package_path:
-        package_path = os.path.join(os.getcwd(), 'result.zip')
-
-    _execute_command('zip -r {0} {1}'.format(package_path, result_dir))
-
-
-@click.command()
 @click.option('-f',
               '--framework',
               required=True,
@@ -605,6 +593,7 @@ def validate(framework):
     _validate_faas_cli()
     _validate_zip()
     _validate_environment_variables(framework)
+    logger.info('Everything is valid !!!!')
 
 
 @click.command()
@@ -618,5 +607,4 @@ def run(config_file):
 
 
 main.add_command(run)
-main.add_command(package)
 main.add_command(validate)
