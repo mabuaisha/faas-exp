@@ -434,8 +434,14 @@ This part is the one responsible for conducting experiment on specified containe
 2. Run `pyenv activate faas` Where the pyenv and virtaulenv created as part of bastion setup.
 3. Clone `faas-exp` repository `git clone https://github.com/mabuaisha/faas-exp.git`
 4. Change directory to `faas-exp`
-5. Install all python requirements using `pip install -e .`
-6. Make sure that your application is setup correctly by invoking `faas-exp` you should see something like this
+5. Edit the `/etc/hosts` bu adding HAProxy IP that should map to the following domain:
+    - gateway.openfaas.local
+    - prometheus.openfaas.local
+6. Set the following environment variables:
+    - `export OPENFAAS_URL="http://gateway.openfaas.local"`.
+    - `export KUBECONFIG=/home/centos/kubespray-do.conf` Only relevant for k8s experiment.   
+7. Install all python requirements using `pip install -e .`
+8. Make sure that your application is setup correctly by invoking `faas-exp` you should see something like this:
 
 ```
 (faas-exp) ➜  faas-exp git:(master) ✗ faas-exp
@@ -450,5 +456,114 @@ Commands:
   validate
 
 ```
-    
 
+### Configuration
+
+The faas-exp tool support configure the experiment for each container orchestrator using yaml config file.
+
+All the configurations for the three container orchestrators are located under [config](/config) section. As the following configuration files are existed:
+1. k8s.yaml
+2. nomad.yaml
+3. swarm.yaml
+
+
+All of the above configurations need to be edited as they contains some configuration related to HAProxy IP.
+
+The configuration file contains two main section which are:
+1. experiment
+2. functions
+
+#### Experiment Configuration
+
+Under the `experiment` the following configurations are used:
+
+- `server`: The server endpoint that serve the requests for OpenFaas Serverless and this is represent reference to the HAproxy. Default value is `gateway.openfaas.local`
+- `port`: The port on which HAProxy listen for incoming request. The default value is `80`
+- `number_of_runs`: The number of runs for each functions. How many time we need to run each function. The default value is `6`.
+- `number_of_requests`: The total number of HTTP requests intend to send to the OpenFaas Serverless. Default value is `35000`
+- `delay_between_runs`: The number of minutes to delay between each run. The defauly is `1`. 
+- `replicas`: The number of replicas to use in case the auto scaling is disable on the OpenFaas Serverless framework for each function. Default values are:
+    - 1
+    - 10
+    - 20
+- `concurrency`: The number of simulated users that are going to trigger all the deployed functions.  Default values are:
+    - 5
+    - 10
+    - 20
+    - 50 
+- `result_dir`: The directory where all the results are going to be dumped. The default value is `/home/centos/result`
+
+
+Example of experiment configuration
+
+```
+experiment:
+  server: gateway.openfaas.local
+  port: 80
+  number_of_runs: 6
+  number_of_requests: 35000
+  delay_between_runs: 1
+  replicas:
+    - 1
+    - 10
+    - 20
+  concurrency:
+    - 5
+    - 10
+    - 20
+    - 50
+  result_dir: /home/centos/result
+
+```
+
+
+#### Functions Configuration
+
+The functions configuration contains list of all functions that are going to be deployed to the one of the container orchestrators.
+
+All the configuration will be under `functions` section where each function represent an item and the function can contains the following configureation:
+
+- `name`: The name of the function need to be uploaded. For example `warmfunction`
+- `yaml_path`: The yaml path file where the openfaas function yaml config is located. For example `functions/warm-starts-scenarios/k8s/warmfunction.yml`
+- `environment`: Set of environment variables which are used by the deployed functions. Example of these varaibles:
+    - `read_timeout`: The read timeout period. default `5m5s`
+    - `write_timeout`: The write timeout period. default `5m5s`
+    - `gateway_endpoint`: The gateway endpoint. This is only relevant for composite functions
+    - `ftp_host`: The ftp host IP. This is relevant only for network function
+    - `ftp_user`: The ftp username. This is relevant only for network function. Default value is `ftpuser`
+    - `ftp_password`: The ftp username. This is relevant only for network function. Default value is `ftppassword`
+- `api`: The configuration related to function calls which contains the following:
+    - `uri`: The uri for called function. For example `function/ftpfunction`
+    - `http_method`: The http request method. Default `POST`.
+    -  `param`: The min and max values for param passed to the url. Relevant only for matrix, composite functions as the values generated randomly between min and max
+           `min`: The min value need to set for the param
+           `max`: The max value need to set for the param
+- `inactivity_duration`: This is only relevant for cold/warm start function. How many seconds to wait before sending the next request chunk. The default is 5m and it should not be less than 5.
+- `chunks_number`: How many chunks you need to send the request to the endpoint. Default value is `6` 
+- `depends_on`: An indication that the current function depend on function function. Only relevant for composite function.  
+
+```
+functions:
+  - name: warmfunction
+    # This is must be set as to the same value that configured for idler on docker swarm and k8s
+    # For sake of simplicity the inactivity_duration set for k8s to 5minutes
+    inactivity_duration: 5
+    # This param means that the number_of_requests (total) will be sent over 7 chunks.
+    # For example if number_of_requests = 35000 then for each chunk we are going to send 35000/7 = 5000 requests
+    # This is added in order to see the effect of the cold start time between each chunk
+    chunks_number: 6
+    yaml_path: functions/warm-starts-scenarios/k8s/warmfunction.yml
+    environment:
+      read_timeout: 5m5s
+      write_timeout: 5m5s
+    api:
+      uri: function/warmfunction
+      data: "Hello warmfunction on k8s"
+      http_method: POST
+
+```  
+
+To start executing your experiment for nomad run the following command:
+```
+faas-exp run -c faas-exp/config/nomad.yaml
+```

@@ -16,23 +16,6 @@ experiment:
   result_dir: /home/centos/result
 
 functions:
-# The fib function is excluded from the nomad
-#  - name: fibfunction
-#    # This is must be set as 15m just like we configure for idler on docker swarm and k8s
-#    inactivity_duration: 15
-#    yaml_path: functions/warm-starts-scenarios/common/fibfunction.yml
-#    environment:
-#      read_timeout: 5m5s
-#      write_timeout: 5m5s
-#    api:
-#      uri: function/fibfunction
-#      # The range of values that param can take from 5 - 40
-#      # This min/max values will be used by the Random function provided by jmeter
-#      param:
-#        min: 5
-#        max: 40
-#      http_method: POST
-
   - name: gofunction
     yaml_path: functions/runtimes-scenarios/go/common/gofunction.yml
     environment:
