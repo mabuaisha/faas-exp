@@ -1,8 +1,13 @@
 variable "subnet_id" {}
 variable "bastion_ip" {}
-variable "ftp_username" {}
-variable "ftp_password" {}
 variable "security_group_ids" { type    = list(string) }
+
+variable "ftp_username" {
+  default = 'ftpuser'
+}
+variable "ftp_password" {
+  default = 'ftppassword'
+}
 
 variable "private_key" {
   default = "~/.ssh/faas_ssh"

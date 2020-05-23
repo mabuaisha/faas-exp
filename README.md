@@ -371,5 +371,58 @@ private_ip = 10.0.2.109]
 
 #### FTP
 
+This module is used in order to create and prepare ftp server that is going to be used by the experiment.
+
+##### AWS
+
+The following inputs are used to create FTP resource on AWS as specified on the [variables](/ftp/aws/variables.tf) file:
+
+- `subnet_id`: The private subent id. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `security_group_ids`: The list of security group ids. Required
+- `ftp_username`: The ftp username to create for access ftp server. The default value is `ftpuser`.
+- `ftp_password`: The ftp password to create for access ftp server. The default value is `ftppassword`.
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `volume_size`: The volume size for bastion instance. The default value is `15` GB.
+- `instance_type`: The instance type for AWS. The default value is `t3a.medium`.
+- `image_id`: The image id where instance is creating from. The default value is `ami-0affd4508a5d2481b` (Centos 7.6)
+
+
+##### Openstack
+
+The following inputs are used to create FTP resource on Openstack as specified on the [variables](/ftp/openstack/variables.tf) file: 
+
+- `network_id`:The network id where bastion resourced created in. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `ftp_username`: The ftp username to create for access ftp server. The default value is `ftpuser`.
+- `ftp_password`: The ftp password to create for access ftp server. The default value is `ftppassword`.
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `flavor`: The type of the machine need to be created. (Required) Flavor is a custom in Openstack and varies from provider to provider.
+- `image`: The image type where instance is going to be created. (Required) This project use Centos and the name varies from from provider to provider.
+
+For both AWS & Openstack run the following commands:
+
+```
+terraform init
+terraform apply -var-file=inputs.tfvars
+
+```
+
+`inputs.tfvars` should be created to fill the required values and override any default value.
+
+Terraform outputs
+```
+private_ip = 10.0.2.109]
+```
+
+Notes:
+1. Before start using the ftp server, at least add one file to the ftp server called 'test.txt' as it used by the [ftpfunction](/functions/computation-scenarios/network/ftpfunction)
+2. The Flavor for openstack option should match the following:
+    - 2vCPU + 8GB for cluster resources
+    - 2vCPU + 4GB for both FTP + Haproxy + Bastion
+
+
 ## Part2
 
