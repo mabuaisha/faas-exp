@@ -1,5 +1,5 @@
 # faas-exp
-This project is created as part of Thesis in Software Engineering for measuring the performance of Serverless using 3 different container orchestration frameworks (Kubernetes, Docker Swarm, Nomad) where Openfass framework is used as a case study.
+This project is created as part of Thesis in Software Engineering for measuring the performance of Serverless using 3 different container orchestration frameworks (Kubernetes, Docker Swarm, Nomad) where Openfass framework is used as a use case.
 The following items are automated by this project:
 
 1. Automate infrastructure provisioning on AWS & Openstack cloud.
@@ -145,7 +145,7 @@ Notes:
 
 ##### AWS
 
-The following inputs are used to create bastion resource on AWS as specified on the [variables](/docker-swarm/aws/variables.tf) file:
+The following inputs are used to create docker swarm resource on AWS as specified on the [variables](/docker-swarm/aws/variables.tf) file:
 
 - `subnet_id`: The private subent id. Required.
 - `bastion_ip`: The bastion ip. Required.
@@ -163,6 +163,26 @@ The following inputs are used to create bastion resource on AWS as specified on 
 
 To create bastion update your variables file and run the following command inside [aws](/bastion/aws):
 
+
+##### Openstack
+
+The following inputs are used to create docker swarm resource resource on Openstack as specified on the [variables](/docker-swarm/openstack/variables.tf) file:
+
+- `network_id`:The network id where bastion resourced created in. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `docker_username`: The dockerhub username. Required
+- `docker_password`: The dockerhub password. Required
+- `flavor`: The type of the machine need to be created. (Required) Flavor is a custom in Openstack and varies from provider to provider.
+- `image`: The image type where instance is going to be created. (Required) This project use Centos and the name varies from from provider to provider.
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `worker_name`: The worker name. The default value is `docker-swarm`.
+- `manager_count`: The number of managers. The default value is `1` and should be 1.
+- `worker_count`: The number of workers. The default value is `2`.
+
+
+For both AWS & Openstack run the following commands:
+
 ```
 terraform init
 terraform apply -var-file=inputs.tfvars
@@ -179,9 +199,37 @@ worker_token = SWMTKN-1-49nj1cmql0jkz5s954yi3oex3nedyz0fb0xx14ie39trti4wxv-8vxv8
 manager_token =49nj1cmql0jkz5s954yi3oex3nedyz0fb0xx14ie39trti4wxv-8vxv8rssmk743ojnwacrr2e7c 
 ```
 
-##### Openstack
+#### Nomad
 
-The following inputs are used to create bastion resource on Openstack as specified on the [variables](/docker-swarm/openstack/variables.tf) file:
+This module is used to create required resources for nomad and deploy OpenFaas Serverless framework to the cluster which includes 3 machines: 1 server and 2 clients.
+
+For the sake of this study the current version of this project supports 3 nodes (1 server + 2 clients) and its going to be updated in near future.
+
+##### AWS
+
+The following inputs are used to create nomad resource resource on AWS as specified on the [variables](/nomad/aws/variables.tf) file:
+
+- `subnet_id`: The private subent id. Required.
+- `bastion_ip`: The bastion ip. Required.
+- `docker_username`: The dockerhub username. Required
+- `docker_password`: The dockerhub password. Required
+- `security_group_ids`: The list of security group ids. Required
+- `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
+- `worker_name`: The worker name. The default value is `nomad`.
+- `env_name`: The environment name. The default value is `serverless-env`.
+- `servers_count`: The number of nomad servers. The default value is `1` and should be 1.
+- `clients_count`: The number of clients. The default value is `2`.
+- `volume_size`: The volume size for bastion instance. The default value is `15` GB.
+- `instance_type`: The instance type for AWS. The default value is `t3a.large`.
+- `image_id`: The image id where instance is creating from. The default value is `ami-0affd4508a5d2481b` (Centos 7.6)
+- `datacenter`: The data center value for nomad. The default value is `dc1`.
+- `consul_version`: The consul version used for this experiment. The default value is `1.2.0`.
+- `nomad_version`: The nomad version used for this experiment. The default value is `0.8.4`.  
+
+
+#### Openstack
+
+The following inputs are used to create nomad resource resource on Openstack as specified on the [variables](/nomad/openstack/variables.tf) file:
 
 - `network_id`:The network id where bastion resourced created in. Required.
 - `bastion_ip`: The bastion ip. Required.
@@ -191,12 +239,13 @@ The following inputs are used to create bastion resource on Openstack as specifi
 - `image`: The image type where instance is going to be created. (Required) This project use Centos and the name varies from from provider to provider.
 - `private_key`: The private key required to ssh for instances. The default location `~/.ssh/faas_ssh`.
 - `env_name`: The environment name. The default value is `serverless-env`.
-- `worker_name`: The worker name. The default value is `docker-swarm`.
-- `manager_count`: The number of managers. The default value is `1` and should be 1.
-- `worker_count`: The number of workers. The default value is `2`.
+- `worker_name`: The worker name. The default value is `nomad`.
+- `servers_count`: The number of nomad servers. The default value is `1` and should be 1.
+- `clients_count`: The number of clients. The default value is `2`.
+- `datacenter`: The data center value for nomad. The default value is `dc1`.
+- `consul_version`: The consul version used for this experiment. The default value is `1.2.0`.
+- `nomad_version`: The nomad version used for this experiment. The default value is `0.8.4`.
 
-
-#### Nomad
 #### Kubernetes
 #### HAproxy
 #### FTP

@@ -8,11 +8,7 @@ module "nomad_servers" {
   worker_image = var.image
   worker_flavor = var.flavor
   network_id = var.network_id
-  security_group_ids = [
-    openstack_compute_secgroup_v2.consul_sg.name,
-    openstack_compute_secgroup_v2.nomad_sg.name,
-    openstack_compute_secgroup_v2.general_sg.name
-  ]
+  security_group_ids = ["default"]
 }
 
 module "nomad_clients" {
@@ -28,9 +24,5 @@ module "nomad_clients" {
   network_id = var.network_id
   docker_username = var.docker_username
   docker_password = var.docker_password
-  security_group_ids = [
-    openstack_compute_secgroup_v2.consul_sg.name,
-    openstack_compute_secgroup_v2.nomad_sg.name,
-    openstack_compute_secgroup_v2.general_sg.name
-  ]
+  security_group_ids = ["default"]
 }

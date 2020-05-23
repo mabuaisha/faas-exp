@@ -16,10 +16,6 @@ variable worker_name {
   default = "nomad"
 }
 
-variable "consul_hosts" {
-  default = []
-}
-
 variable "env_name" {
   default = "serverless-env"
 }
@@ -48,10 +44,6 @@ variable consul_version {
 variable nomad_version {
   type    = "string"
   default = "0.8.4"
-}
-
-variable "consul_size" {
-  default = 1
 }
 
 variable "servers_count" {
