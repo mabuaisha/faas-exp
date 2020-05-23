@@ -39,3 +39,24 @@ curl -sL https://cli.openfaas.com -o faas.sh
 chmod +x faas.sh && ./faas.sh
 sudo cp faas-cli /usr/local/bin/faas-cli
 sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas
+
+# Prepare virtaulenv
+# Install pyenv installer so that we can setup it later on
+curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+
+echo 'export PATH="$HOME/.pyenv/bin:$PATH"'  >> ~/.bashrc
+echo 'eval "$(pyenv init -)"'  >> ~/.bashrc
+echo 'eval "$(pyenv virtualenv-init -)"'  >> ~/.bashrc
+
+echo "Source bashrc"
+source ~/.bashrc
+
+# Setup pyenv
+echo "Setup Pyenv is done !!!"
+pyenv --version
+
+echo "Install python version 3.7.0"
+pyenv install 3.7.0
+
+echo "Create virtualenv called k8s"
+pyenv virtualenv 3.7.0 faas
