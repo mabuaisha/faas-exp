@@ -9,5 +9,7 @@ module "swarm-cluster" {
   network_id = var.network_id
   docker_password = var.docker_password
   docker_username = var.docker_username
-  security_group_ids = [openstack_compute_secgroup_v2.general_sg.name, "default"]
+  manager_count = var.manager_count
+  worker_count = var.worker_count
+  security_group_ids = ["default"]
 }

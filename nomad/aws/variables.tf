@@ -4,6 +4,10 @@ variable "bastion_ip" {}
 
 variable "security_group_ids" { type    = list(string) }
 
+variable "docker_username" {}
+
+variable "docker_password" {}
+
 variable "private_key" {
   default = "~/.ssh/faas_ssh"
 }
@@ -16,20 +20,8 @@ variable "consul_hosts" {
   default = []
 }
 
-variable "docker_username" {
-  default = ""
-}
-
-variable "docker_password" {
-  default = ""
-}
-
 variable "env_name" {
   default = "serverless-env"
-}
-
-variable worker_count {
-  default = "1"
 }
 
 variable "volume_size" {
