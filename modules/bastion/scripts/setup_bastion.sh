@@ -13,6 +13,8 @@ sudo yum install -y docker-ce-19.03.7-3.el7
 sudo yum install -y httpd-tools
 sudo yum install -y unzip
 sudo yum install -y java-1.8.0-openjdk
+sudo yum -y groupinstall "Development Tools"
+sudo yum -y install libffi-devel zlib-devel bzip2-devel readline-devel sqlite-devel wget curl llvm ncurses-devel openssl-devel lzma-sdk-devel libyaml-devel redhat-rpm-config gcc
 
 # Install and configure terraform in bastion host
 curl https://releases.hashicorp.com/terraform/0.12.21/terraform_0.12.21_linux_386.zip -o terraform.zip
