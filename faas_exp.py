@@ -577,6 +577,10 @@ def _validate_environment_variables(framework):
         raise Exception('OPENFAAS_URL variable is not set')
 
 
+def _aggregate_result(source_dir, destination_dir):
+    pass
+
+
 @click.group()
 def main():
     pass
@@ -597,6 +601,17 @@ def validate(framework):
 
 
 @click.command()
+@click.option('-s',
+              '--source-dir',
+              required=True,
+              '-d',
+              '--destination-dir',
+              required=True)
+def aggregate(source_dir, destination_dir):
+    _aggregate_result(source_dir, destination_dir)
+
+
+@click.command()
 @click.option('-c',
               '--config-file',
               required=True,
@@ -608,3 +623,4 @@ def run(config_file):
 
 main.add_command(run)
 main.add_command(validate)
+main.add_command(aggregate)
