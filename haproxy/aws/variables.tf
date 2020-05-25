@@ -4,7 +4,7 @@ variable "backend_ips" { type = list(string) }
 variable "security_group_ids" { type    = list(string) }
 
 variable "openfaas_backend_port" {
-  default = 80
+  default = 8080
 }
 
 variable "prometheus_backend_port" {
@@ -28,6 +28,6 @@ variable "volume_size" {
 }
 
 variable "instance_type" {
-  default = "t3a.medium"
+  default = "t2.micro"
 }
 

@@ -441,7 +441,8 @@ This part is the one responsible for conducting experiment on specified containe
     - `export OPENFAAS_URL="http://gateway.openfaas.local"`.
     - `export KUBECONFIG=/home/centos/kubespray-do.conf` Only relevant for k8s experiment.   
 7. Install all python requirements using `pip install -e .`
-8. Make sure that your application is setup correctly by invoking `faas-exp` you should see something like this:
+8. Make sure to pull the latest template by running the following command inside `faas-exp` `faas-cli template pull https://github.com/mabuaisha/templates.git`
+9. Make sure that your application is setup correctly by invoking `faas-exp` you should see something like this:
 
 ```
 (faas-exp) ➜  faas-exp git:(master) ✗ faas-exp

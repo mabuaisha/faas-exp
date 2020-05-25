@@ -1,14 +1,22 @@
 import os
 import sys
 import time
+import csv
+import json
 import logging
 import subprocess
+from pathlib import Path
 
 import click
 import requests
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
+from functions import (
+    SAMPLE,
+    FUNCTIONS,
+    CASES
+)
 
 # Prepare Config
 config = Config()
@@ -36,6 +44,7 @@ logger.addHandler(handler)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JMETER_DIR = os.path.join(BASE_DIR, 'jmeter')
+RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 
 def _is_cold_start_enabled(function):
@@ -75,6 +84,12 @@ def _creat_dir(dir_path):
         logger.info('Directory {} created successfully'.format(dir_path))
     else:
         logger.info('Directory {} is already existed'.format(dir_path))
+
+
+def _create_nested_dir(dir_path):
+    p = Path(dir_path)
+    p.mkdir(parents=True, exist_ok=True)
+    logger.info('Directory {} created successfully'.format(dir_path))
 
 
 def _clean_properties_file():
@@ -578,7 +593,65 @@ def _validate_environment_variables(framework):
 
 
 def _aggregate_result(source_dir, destination_dir):
-    pass
+    # Create the destination directory
+    _creat_dir(destination_dir)
+
+    # Check if the source directory exists or not
+    if not os.path.isdir(source_dir):
+        raise Exception('The source directory does not exist')
+
+    for function in FUNCTIONS:
+        function_dir = os.path.join(destination_dir, function)
+        parallel_autoscaling = os.path.join(
+            function_dir, 'parallel/autoscaling'
+        )
+        parallel_nonautoscaling = os.path.join(
+            function_dir, 'parallel/noautoscaling'
+        )
+        sequential_nonautoscaling = os.path.join(
+            function_dir, 'sequential/noautoscaling'
+        )
+        for dir_to_create in [
+            parallel_autoscaling,
+            parallel_nonautoscaling,
+            sequential_nonautoscaling
+        ]:
+
+            # Create the directory so that we can dump the result there.
+            _create_nested_dir(dir_to_create)
+
+            for case in CASES:
+                dir_list = dir_to_create.rsplit('/', 2)
+                dir_type = '{0}/{1}'.format(dir_list[1], dir_list[2])
+                if case.get('type') == dir_type:
+                    function_src_path = os.path.join(source_dir, function)
+                    dir_case_path = os.path.join(function_src_path, dir_type)
+                    for path in case.get('paths'):
+                        headers = [('runNumber',) + SAMPLE]
+                        csv.register_dialect('path_dialect',
+                                             quoting=csv.QUOTE_NONNUMERIC,
+                                             skipinitialspace=True)
+                        for index in range(6):
+                            run_num = index + 1
+                            path_to_render = path.format(index=run_num)
+                            statistics_path = os.path.join(
+                                dir_case_path, path_to_render
+                            )
+                            with open(statistics_path) as stat_path:
+                                result = json.load(stat_path)
+                                total_result = result['Total']
+                                headers.append(
+                                    [run_num] + [
+                                        total_result[field]
+                                        for field in SAMPLE
+                                    ]
+                                )
+                        case_id = path.split('/')[0]
+                        function_result = os.path.join(dir_to_create, case_id)
+                        with open('{0}.csv'.format(function_result), 'w') as f:
+                            writer = csv.writer(f, dialect='path_dialect')
+                            for row in headers:
+                                writer.writerow(row)
 
 
 @click.group()
@@ -603,11 +676,17 @@ def validate(framework):
 @click.command()
 @click.option('-s',
               '--source-dir',
-              required=True,
-              '-d',
-              '--destination-dir',
               required=True)
-def aggregate(source_dir, destination_dir):
+@click.option('-d',
+              '--destination-dir',
+              default=RESULTS_DIR,
+              required=False)
+@click.option('-f',
+              '--framework',
+              required=True,
+              type=click.Choice(['k8s', 'swarm', 'nomad']))
+def aggregate(source_dir, destination_dir, framework):
+    destination_dir = os.path.join(destination_dir, framework)
     _aggregate_result(source_dir, destination_dir)
 
 
