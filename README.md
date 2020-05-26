@@ -460,6 +460,7 @@ Commands:
 The `faas-exp` supports the following command:
 1. `faas-exp validate`. This command will validate that your ready to run your experiment.
 2. `faas-exp run -c config.yaml`. This command will start running actual experiment.
+3. `faas-exp aggregate -s SOURCE_RESULT_DIR -d DESTINATION_RESULT_DIR -e [FUNCTION_NAME]`
 
 ### Configuration
 
