@@ -592,15 +592,59 @@ def _validate_environment_variables(framework):
         raise Exception('OPENFAAS_URL variable is not set')
 
 
-def _aggregate_result(source_dir, destination_dir):
+def _is_warm_function(function_name):
+    return True if function_name == 'warmfunction' else False
+
+
+def _populate_from_statistics(function, path, dir_case_path, headers):
+    warm_cases = [
+        'warm_0',
+        'cold_0',
+        'warm_1',
+        'cold_1',
+        'warm_2',
+        'cold_2'
+    ]
+    inner_loop = 6 if _is_warm_function(function) else 1
+    for index in range(6):
+        for warm_index in range(inner_loop):
+            run_num = index + 1
+            if _is_warm_function(function):
+                _index = '{0}/{1}'.format(run_num, warm_cases[warm_index])
+                pre_field = [run_num, warm_cases[warm_index].split('_')[0]]
+                path_to_render = path.format(index=_index)
+            else:
+                pre_field = [run_num]
+                path_to_render = path.format(index=run_num)
+
+            # The statistics file
+            statistics_path = os.path.join(
+                dir_case_path, path_to_render
+            )
+
+            with open(statistics_path) as stat_path:
+                result = json.load(stat_path)
+                total_result = result['Total']
+                headers.append(
+                    pre_field + [
+                        total_result[field]
+                        for field in SAMPLE
+                    ]
+                )
+
+
+def _aggregate_result(source_dir, destination_dir, exclude_function=None):
+    exclude_function = exclude_function or []
     # Create the destination directory
-    _creat_dir(destination_dir)
+    _create_nested_dir(destination_dir)
 
     # Check if the source directory exists or not
     if not os.path.isdir(source_dir):
         raise Exception('The source directory does not exist')
 
     for function in FUNCTIONS:
+        if function in exclude_function:
+            continue
         function_dir = os.path.join(destination_dir, function)
         parallel_autoscaling = os.path.join(
             function_dir, 'parallel/autoscaling'
@@ -627,25 +671,19 @@ def _aggregate_result(source_dir, destination_dir):
                     function_src_path = os.path.join(source_dir, function)
                     dir_case_path = os.path.join(function_src_path, dir_type)
                     for path in case.get('paths'):
-                        headers = [('runNumber',) + SAMPLE]
+                        pre_header = ('runNumber',)
+                        if _is_warm_function(function):
+                            pre_header = ('runNumber', 'startTime',)
+                        headers = [pre_header + SAMPLE]
                         csv.register_dialect('path_dialect',
                                              quoting=csv.QUOTE_NONNUMERIC,
                                              skipinitialspace=True)
-                        for index in range(6):
-                            run_num = index + 1
-                            path_to_render = path.format(index=run_num)
-                            statistics_path = os.path.join(
-                                dir_case_path, path_to_render
-                            )
-                            with open(statistics_path) as stat_path:
-                                result = json.load(stat_path)
-                                total_result = result['Total']
-                                headers.append(
-                                    [run_num] + [
-                                        total_result[field]
-                                        for field in SAMPLE
-                                    ]
-                                )
+
+                        _populate_from_statistics(
+                            function,
+                            path, dir_case_path,
+                            headers
+                        )
                         case_id = path.split('/')[0]
                         function_result = os.path.join(dir_to_create, case_id)
                         with open('{0}.csv'.format(function_result), 'w') as f:
@@ -681,13 +719,12 @@ def validate(framework):
               '--destination-dir',
               default=RESULTS_DIR,
               required=False)
-@click.option('-f',
-              '--framework',
-              required=True,
-              type=click.Choice(['k8s', 'swarm', 'nomad']))
-def aggregate(source_dir, destination_dir, framework):
-    destination_dir = os.path.join(destination_dir, framework)
-    _aggregate_result(source_dir, destination_dir)
+@click.option('-e',
+              '--exclude-function',
+              required=False,
+              multiple=True)
+def aggregate(source_dir, destination_dir, exclude_function):
+    _aggregate_result(source_dir, destination_dir, exclude_function)
 
 
 @click.command()

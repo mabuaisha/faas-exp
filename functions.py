@@ -35,7 +35,7 @@ FUNCTIONS = (
     'matrixfunction',
     'consumerfunction',
     'ftpfunction',
-    # 'warmfunction',
+    'warmfunction',
 )
 
 SAMPLE = (
