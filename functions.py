@@ -1,28 +1,47 @@
 CASES = [
     {
         'type': 'parallel/autoscaling',
-        'paths': [
+        'statistics': [
             'user_5/{index}/results/statistics.json',
             'user_10/{index}/results/statistics.json',
             'user_20/{index}/results/statistics.json',
             'user_50/{index}/results/statistics.json',
+        ],
+        'summaries': [
+            'user_5/{index}/summary.jtl',
+            'user_10/{index}/summary.jtl',
+            'user_20/{index}/summary.jtl',
+            'user_50/{index}/summary.jtl',
         ]
     },
     {
         'type': 'parallel/noautoscaling',
-        'paths': [
+        'statistics': [
             'replica1/{index}/results/statistics.json',
             'replica10/{index}/results/statistics.json',
             'replica20/{index}/results/statistics.json',
+        ],
+        'summaries': [
+            'user_5/{index}/summary.jtl',
+            'user_10/{index}/summary.jtl',
+            'user_20/{index}/summary.jtl',
+            'user_50/{index}/summary.jtl',
         ]
     },
     {
         'type': 'sequential/noautoscaling',
-        'paths': [
+        'statistics': [
             'replica1/{index}/results/statistics.json',
             'replica10/{index}/results/statistics.json',
             'replica20/{index}/results/statistics.json',
+        ],
+        'summaries': [
+            'user_5/{index}/summary.jtl',
+            'user_10/{index}/summary.jtl',
+            'user_20/{index}/summary.jtl',
+            'user_50/{index}/summary.jtl',
         ]
+
     }
 ]
 

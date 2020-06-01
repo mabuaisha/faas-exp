@@ -5,10 +5,13 @@ import csv
 import json
 import logging
 import subprocess
+from statistics import mean
+from statistics import stdev
 from pathlib import Path
 
 import click
 import requests
+import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -596,7 +599,44 @@ def _is_warm_function(function_name):
     return True if function_name == 'warmfunction' else False
 
 
-def _populate_from_statistics(function, path, dir_case_path, headers):
+def _populate_statistics_data(statistics_path, headers, pre_field):
+    with open(statistics_path) as stat_path:
+        result = json.load(stat_path)
+        total_result = result['Total']
+        headers.append(
+            pre_field + [
+                total_result[field]
+                for field in SAMPLE
+            ]
+        )
+
+
+def _update_result_with_stdev(target_path):
+    elapses = []
+    with open(target_path) as csv_file:
+        data = pd.read_csv(csv_file)
+        for _, entry in data.iterrows():
+            num = int(entry['elapsed'])
+            elapses.append(num)
+
+    stdev_result = stdev(elapses)
+    statistics_file = os.path.join(
+        target_path.rsplit('/', 1)[-2],
+        'results/statistics.json'
+    )
+
+    statistics_stdev = os.path.join(
+        target_path.rsplit('/', 1)[-2],
+        'results/statistics_stdev.json'
+    )
+    with open(statistics_file) as _fd:
+        content = json.load(_fd)
+        content['StdDev'] = stdev_result
+        with open(statistics_stdev) as _wf:
+            json.dump(content, _wf)
+
+
+def _parse_test_cases_results(function, path, dir_case_path, headers=None):
     warm_cases = [
         'warm_0',
         'cold_0',
@@ -605,6 +645,7 @@ def _populate_from_statistics(function, path, dir_case_path, headers):
         'warm_2',
         'cold_2'
     ]
+    headers = headers or []
     inner_loop = 6 if _is_warm_function(function) else 1
     for index in range(6):
         for warm_index in range(inner_loop):
@@ -617,19 +658,62 @@ def _populate_from_statistics(function, path, dir_case_path, headers):
                 pre_field = [run_num]
                 path_to_render = path.format(index=run_num)
 
-            # The statistics file
-            statistics_path = os.path.join(
+            # The target file
+            target_path = os.path.join(
                 dir_case_path, path_to_render
             )
 
-            with open(statistics_path) as stat_path:
-                result = json.load(stat_path)
-                total_result = result['Total']
-                headers.append(
-                    pre_field + [
-                        total_result[field]
-                        for field in SAMPLE
-                    ]
+            # Apply this only when passing headers
+            if headers:
+                _populate_statistics_data(
+                    target_path,
+                    headers,
+                    pre_field
+                )
+            else:
+                _update_result_with_stdev(target_path)
+
+
+def _aggregate_statistics(function, case, dir_case_path, dir_to_create):
+    for path in case.get('statistics'):
+        pre_header = ('runNumber',)
+        if _is_warm_function(function):
+            pre_header = ('runNumber', 'startTime',)
+        headers = [pre_header + SAMPLE]
+        csv.register_dialect('path_dialect',
+                             quoting=csv.QUOTE_NONNUMERIC,
+                             skipinitialspace=True)
+
+        _parse_test_cases_results(
+            function,
+            path, dir_case_path,
+            headers
+        )
+        case_id = path.split('/')[0]
+        function_result = os.path.join(dir_to_create, case_id)
+        with open('{0}.csv'.format(function_result), 'w') as f:
+            writer = csv.writer(f, dialect='path_dialect')
+            for row in headers:
+                writer.writerow(row)
+
+
+def _calculate_stdev(source_dir, exclude_function=None):
+    exclude_function = exclude_function or []
+    # Check if the source directory exists or not
+    if not os.path.isdir(source_dir):
+        raise Exception('The source directory does not exist')
+
+    for function in FUNCTIONS:
+        if function in exclude_function:
+            continue
+        for case in CASES:
+            function_src_path = os.path.join(source_dir, function)
+            dir_case_path = os.path.join(function_src_path, case.get('type'))
+            for path in case['summaries']:
+                _parse_test_cases_results(
+                    function,
+                    path,
+                    dir_case_path,
                 )
 
 
@@ -670,26 +754,12 @@ def _aggregate_result(source_dir, destination_dir, exclude_function=None):
                 if case.get('type') == dir_type:
                     function_src_path = os.path.join(source_dir, function)
                     dir_case_path = os.path.join(function_src_path, dir_type)
-                    for path in case.get('paths'):
-                        pre_header = ('runNumber',)
-                        if _is_warm_function(function):
-                            pre_header = ('runNumber', 'startTime',)
-                        headers = [pre_header + SAMPLE]
-                        csv.register_dialect('path_dialect',
-                                             quoting=csv.QUOTE_NONNUMERIC,
-                                             skipinitialspace=True)
-
-                        _populate_from_statistics(
-                            function,
-                            path, dir_case_path,
-                            headers
-                        )
-                        case_id = path.split('/')[0]
-                        function_result = os.path.join(dir_to_create, case_id)
-                        with open('{0}.csv'.format(function_result), 'w') as f:
-                            writer = csv.writer(f, dialect='path_dialect')
-                            for row in headers:
-                                writer.writerow(row)
+                    _aggregate_statistics(
+                        function,
+                        case,
+                        dir_case_path,
+                        dir_to_create
+                    )
 
 
 @click.group()
