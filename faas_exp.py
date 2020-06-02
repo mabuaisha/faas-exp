@@ -631,9 +631,12 @@ def _update_result_with_stdev(target_path):
     )
     with open(statistics_file) as _fd:
         content = json.load(_fd)
-        content['StdDev'] = stdev_result
-        with open(statistics_stdev) as _wf:
-            json.dump(content, _wf)
+        content['Total']['StdDev'] = stdev_result
+        content['HTTP Request']['StdDev'] = stdev_result
+        with open(statistics_stdev, 'w') as _wf:
+            json.dump(content, _wf, indent=4)
+
+    logger.info('Writing stdev value to {0}'.format(statistics_stdev))
 
 
 def _parse_test_cases_results(function, path, dir_case_path, headers=None):
@@ -768,6 +771,18 @@ def main():
 
 
 @click.command()
+@click.option('-s',
+              '--source-dir',
+              required=True)
+@click.option('-e',
+              '--exclude-function',
+              required=False,
+              multiple=True)
+def get_stdev(source_dir, exclude_function):
+    _calculate_stdev(source_dir, exclude_function)
+
+
+@click.command()
 @click.option('-f',
               '--framework',
               required=True,
@@ -810,3 +825,4 @@ def run(config_file):
 main.add_command(run)
 main.add_command(validate)
 main.add_command(aggregate)
+main.add_command(get_stdev)
