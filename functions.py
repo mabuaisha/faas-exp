@@ -1,45 +1,71 @@
 CASES = [
     {
         'type': 'parallel/autoscaling',
-        'statistics': [
-            'user_5/{index}/results/statistics_stdev.json',
-            'user_10/{index}/results/statistics_stdev.json',
-            'user_20/{index}/results/statistics_stdev.json',
-            'user_50/{index}/results/statistics_stdev.json',
-        ],
-        'summaries': [
-            'user_5/{index}/summary.jtl',
-            'user_10/{index}/summary.jtl',
-            'user_20/{index}/summary.jtl',
-            'user_50/{index}/summary.jtl',
-        ]
+        'paths':
+            [
+                {
+                    'statistic':
+                        'user_5/{index}/results/statistics.json',
+                    'summary': 'user_5/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'user_10/{index}/results/statistics.json',
+                    'summary': 'user_10/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'user_20/{index}/results/statistics.json',
+                    'summary': 'user_20/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'user_50/{index}/results/statistics.json',
+                    'summary': 'user_50/{index}/summary.jtl'
+                },
+            ],
     },
     {
         'type': 'parallel/noautoscaling',
-        'statistics': [
-            'replica1/{index}/results/statistics_stdev.json',
-            'replica10/{index}/results/statistics_stdev.json',
-            'replica20/{index}/results/statistics_stdev.json',
-        ],
-        'summaries': [
-            'replica1/{index}/summary.jtl',
-            'replica10/{index}/summary.jtl',
-            'replica20/{index}/summary.jtl',
-        ]
+        'paths':
+            [
+                {
+                    'statistic':
+                        'replica1/{index}/results/statistics.json',
+                    'summary': 'replica1/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'replica10/{index}/results/statistics.json',
+                    'summary': 'replica10/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'replica20/{index}/results/statistics.json',
+                    'summary': 'replica20/{index}/summary.jtl'
+                },
+            ],
     },
     {
         'type': 'sequential/noautoscaling',
-        'statistics': [
-            'replica1/{index}/results/statistics_stdev.json',
-            'replica10/{index}/results/statistics_stdev.json',
-            'replica20/{index}/results/statistics_stdev.json',
-        ],
-        'summaries': [
-            'replica1/{index}/summary.jtl',
-            'replica10/{index}/summary.jtl',
-            'replica20/{index}/summary.jtl',
-        ]
-
+        'paths':
+            [
+                {
+                    'statistic':
+                        'replica1/{index}/results/statistics.json',
+                    'summary': 'replica1/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'replica10/{index}/results/statistics.json',
+                    'summary': 'replica10/{index}/summary.jtl'
+                },
+                {
+                    'statistic':
+                        'replica20/{index}/results/statistics.json',
+                    'summary': 'replica20/{index}/summary.jtl'
+                }
+            ],
     }
 ]
 
@@ -56,17 +82,7 @@ FUNCTIONS = (
 )
 
 SAMPLE = (
-    'sampleCount',
-    'errorCount',
-    'errorPct',
-    'meanResTime',
-    'minResTime',
-    'maxResTime',
-    'pct1ResTime',
-    'pct2ResTime',
-    'pct3ResTime',
+    'resTime',
     'throughput',
-    'StdDev',
-    'receivedKBytesPerSec',
-    'sentKBytesPerSec'
+    'errorPct',
 )

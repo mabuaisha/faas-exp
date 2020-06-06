@@ -5,13 +5,16 @@ import csv
 import json
 import logging
 import subprocess
-from statistics import mean
-from statistics import stdev
+from statistics import median
 from pathlib import Path
 
 import click
 import requests
 import pandas as pd
+import numpy as np
+import matplotlib.mlab as mlab
+import matplotlib.pyplot as plt
+from scipy.stats import norm
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -599,89 +602,144 @@ def _is_warm_function(function_name):
     return True if function_name == 'warmfunction' else False
 
 
-def _populate_statistics_data(statistics_path, headers, pre_field):
-    with open(statistics_path) as stat_path:
-        result = json.load(stat_path)
-        total_result = result['Total']
-        headers.append(
-            pre_field + [
-                total_result[field]
-                for field in SAMPLE
-            ]
+def _aggregate_warm_data(
+        path,
+        dir_case_path,
+        warm_cases,
+        run_index,
+):
+    for warm_case, metrics in warm_cases.items():
+        _index = '{0}/{1}'.format(run_index, warm_case)
+        _item_to_add = warm_case.split('_')[0]
+
+        _aggregate_summaries_and_statistic(
+            path,
+            dir_case_path,
+            metrics,
+            _index
         )
 
 
-def _update_result_with_stdev(target_path):
-    elapses = []
-    with open(target_path) as csv_file:
+def _aggregate_summaries_and_statistic(
+        path,
+        dir_case_path,
+        metrics,
+        run_num
+):
+    # The target file
+    path_to_summary = path['summary'].format(index=run_num)
+    path_to_statistic = path['statistic'].format(index=run_num)
+    target_summary_path = os.path.join(
+        dir_case_path, path_to_summary
+    )
+    target_statistic_path = os.path.join(
+        dir_case_path, path_to_statistic
+    )
+
+    with open(target_statistic_path) as stat_path:
+        result = json.load(stat_path)
+        total_result = result['Total']
+        for metric in metrics:
+            if metric != 'resTime':
+                metrics[metric].append(total_result[metric])
+
+    with open(target_summary_path) as csv_file:
         data = pd.read_csv(csv_file)
         for _, entry in data.iterrows():
             num = int(entry['elapsed'])
-            elapses.append(num)
-
-    stdev_result = stdev(elapses)
-    statistics_file = os.path.join(
-        target_path.rsplit('/', 1)[-2],
-        'results/statistics.json'
-    )
-
-    statistics_stdev = os.path.join(
-        target_path.rsplit('/', 1)[-2],
-        'results/statistics_stdev.json'
-    )
-    with open(statistics_file) as _fd:
-        content = json.load(_fd)
-        content['Total']['StdDev'] = stdev_result
-        content['HTTP Request']['StdDev'] = stdev_result
-        with open(statistics_stdev, 'w') as _wf:
-            json.dump(content, _wf, indent=4)
-
-    logger.info('Writing stdev value to {0}'.format(statistics_stdev))
+            if 'resTime' not in metrics:
+                metrics['resTime'] = []
+            metrics['resTime'].append(num)
 
 
-def _parse_test_cases_results(function, path, dir_case_path, headers=None):
-    warm_cases = [
-        'warm_0',
-        'cold_0',
-        'warm_1',
-        'cold_1',
-        'warm_2',
-        'cold_2'
-    ]
+def _parse_test_cases_results(
+        function,
+        path,
+        dir_case_path,
+        headers,
+):
+
+    warm_cases = {
+        'warm_0': {
+            'errorPct': [],
+            'throughput': []
+        },
+        'cold_0': {
+            'errorPct': [],
+            'throughput': []
+        },
+        'warm_1': {
+            'errorPct': [],
+            'throughput': []
+        },
+        'cold_1': {
+            'errorPct': [],
+            'throughput': []
+        },
+        'warm_2': {
+            'errorPct': [],
+            'throughput': []
+        },
+        'cold_2': {
+            'errorPct': [],
+            'throughput': []
+        },
+    }
     headers = headers or []
-    inner_loop = 6 if _is_warm_function(function) else 1
+    metrics = {
+        'errorPct': [],
+        'throughput': []
+    }
     for index in range(6):
-        for warm_index in range(inner_loop):
-            run_num = index + 1
-            if _is_warm_function(function):
-                _index = '{0}/{1}'.format(run_num, warm_cases[warm_index])
-                pre_field = [run_num, warm_cases[warm_index].split('_')[0]]
-                path_to_render = path.format(index=_index)
-            else:
-                pre_field = [run_num]
-                path_to_render = path.format(index=run_num)
-
-            # The target file
-            target_path = os.path.join(
-                dir_case_path, path_to_render
+        run_num = index + 1
+        if _is_warm_function(function):
+            _aggregate_warm_data(
+                path,
+                dir_case_path,
+                warm_cases,
+                run_num,
+            )
+        else:
+            # Aggregate summaries and statistic
+            _aggregate_summaries_and_statistic(
+                path,
+                dir_case_path,
+                metrics,
+                run_num
             )
 
-            # Apply this only when passing headers
-            if headers:
-                _populate_statistics_data(
-                    target_path,
-                    headers,
-                    pre_field
-                )
-            else:
-                _update_result_with_stdev(target_path)
+    # Check if this is a warm function or not
+    if _is_warm_function(function):
+        for warm_case, warm_metrics in warm_cases.items():
+            # Get the median result for response time
+            median_result = median(warm_metrics['resTime'])
+            # Get the median result for throughput
+            throughput_result = median(warm_metrics['throughput'])
+            error_pct_result = median(warm_metrics['errorPct'])
+            headers.append([
+                warm_case,
+                median_result,
+                throughput_result,
+                error_pct_result
+            ])
+    else:
+        # Get the median result for response time
+        median_result = median(metrics['resTime'])
+        # Get the median result for throughput
+        throughput_result = median(metrics['throughput'])
+        error_pct_result = median(metrics['errorPct'])
+
+        headers.append([median_result, throughput_result, error_pct_result])
 
 
-def _aggregate_statistics(function, case, dir_case_path, dir_to_create):
-    for path in case.get('statistics'):
-        pre_header = ('runNumber',)
+def _calculate_results(function,
+                       case,
+                       dir_case_path,
+                       dir_to_create):
+    for path in case.get('paths'):
+        pre_header = ()
         if _is_warm_function(function):
-            pre_header = ('runNumber', 'startTime',)
+            pre_header += ('startTime',)
         headers = [pre_header + SAMPLE]
         csv.register_dialect('path_dialect',
                              quoting=csv.QUOTE_NONNUMERIC,
@@ -689,10 +747,11 @@ def _aggregate_statistics(function, case, dir_case_path, dir_to_create):
 
         _parse_test_cases_results(
             function,
-            path, dir_case_path,
-            headers
+            path,
+            dir_case_path,
+            headers,
         )
-        case_id = path.split('/')[0]
+        case_id = path['summary'].split('/')[0]
         function_result = os.path.join(dir_to_create, case_id)
         with open('{0}.csv'.format(function_result), 'w') as f:
             writer = csv.writer(f, dialect='path_dialect')
@@ -700,27 +759,9 @@ def _aggregate_statistics(function, case, dir_case_path, dir_to_create):
                 writer.writerow(row)
 
 
-def _calculate_stdev(source_dir, exclude_function=None):
-    exclude_function = exclude_function or []
-    # Check if the source directory exists or not
-    if not os.path.isdir(source_dir):
-        raise Exception('The source directory does not exist')
-
-    for function in FUNCTIONS:
-        if function in exclude_function:
-            continue
-        for case in CASES:
-            function_src_path = os.path.join(source_dir, function)
-            dir_case_path = os.path.join(function_src_path, case.get('type'))
-            for path in case['summaries']:
-                _parse_test_cases_results(
-                    function,
-                    path,
-                    dir_case_path,
-                )
-
-
-def _aggregate_result(source_dir, destination_dir, exclude_function=None):
+def _aggregate_result(source_dir,
+                      destination_dir,
+                      exclude_function=None):
     exclude_function = exclude_function or []
     # Create the destination directory
     _create_nested_dir(destination_dir)
@@ -757,29 +798,17 @@ def _aggregate_result(source_dir, destination_dir, exclude_function=None):
                 if case.get('type') == dir_type:
                     function_src_path = os.path.join(source_dir, function)
                     dir_case_path = os.path.join(function_src_path, dir_type)
-                    _aggregate_statistics(
+                    _calculate_results(
                         function,
                         case,
                         dir_case_path,
-                        dir_to_create
+                        dir_to_create,
                     )
 
 
 @click.group()
 def main():
     pass
-
-
-@click.command()
-@click.option('-s',
-              '--source-dir',
-              required=True)
-@click.option('-e',
-              '--exclude-function',
-              required=False,
-              multiple=True)
-def get_stdev(source_dir, exclude_function):
-    _calculate_stdev(source_dir, exclude_function)
 
 
 @click.command()
@@ -809,7 +838,11 @@ def validate(framework):
               required=False,
               multiple=True)
 def aggregate(source_dir, destination_dir, exclude_function):
-    _aggregate_result(source_dir, destination_dir, exclude_function)
+    _aggregate_result(
+        source_dir,
+        destination_dir,
+        exclude_function,
+    )
 
 
 @click.command()
@@ -825,4 +858,3 @@ def run(config_file):
 main.add_command(run)
 main.add_command(validate)
 main.add_command(aggregate)
-main.add_command(get_stdev)

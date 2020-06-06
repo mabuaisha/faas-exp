@@ -12,5 +12,8 @@ setuptools.setup(
         'requests==2.23.0',
         'click==7.1.1',
         'ruamel.yaml==0.16.10',
-        'jinja2==2.11.2'
+        'jinja2==2.11.2',
+        'matplotlib==3.2.1',
+        'numpy==1.18.5',
+        'scipy==1.4.1'
     ])

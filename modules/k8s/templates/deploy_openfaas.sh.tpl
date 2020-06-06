@@ -42,12 +42,13 @@ function setupIngressController(){
     # Create a Service for the Ingress Controller Pods
     kubectl create -f service/nodeport.yaml
 
-    # Deploy ingress for prometheus
-    kubectl create -f /home/centos/prometheus-ingress.yaml
 }
 
 function deployOpenFaas(){
  kubectl apply -f https://raw.githubusercontent.com/mabuaisha/faas-netes/master/namespaces.yml
+
+ # Deploy ingress for prometheus
+ kubectl create -f /home/centos/prometheus-ingress.yaml
 
  helm repo add openfaas https://mabuaisha.github.io/faas-chart/
 
