@@ -11,10 +11,6 @@ from pathlib import Path
 import click
 import requests
 import pandas as pd
-import numpy as np
-import matplotlib.mlab as mlab
-import matplotlib.pyplot as plt
-from scipy.stats import norm
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
