@@ -1,6 +1,13 @@
 CASES = [
     {
         'type': 'parallel/autoscaling',
+        'description': 'Parallel Auto Scaling (Users)',
+        'cases': [
+            'user_5',
+            'user_10',
+            'user_20',
+            'user_50'
+        ],
         'paths':
             [
                 {
@@ -27,6 +34,12 @@ CASES = [
     },
     {
         'type': 'parallel/noautoscaling',
+        'description': 'Parallel Non Auto Scaling (Replicas)',
+        'cases': [
+            'replica1',
+            'replica10',
+            'replica20',
+        ],
         'paths':
             [
                 {
@@ -48,6 +61,12 @@ CASES = [
     },
     {
         'type': 'sequential/noautoscaling',
+        'description': 'Sequential Non Auto Scaling (Replicas)',
+        'cases': [
+            'replica1',
+            'replica10',
+            'replica20',
+        ],
         'paths':
             [
                 {
@@ -85,4 +104,10 @@ SAMPLE = (
     'resTime',
     'throughput',
     'errorPct',
+)
+
+FRAMEWORKS = (
+    'k8s',
+    'nomad',
+    'swarm'
 )
