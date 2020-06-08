@@ -2,11 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_figure(
+def plot_bar_figure(
         k8s,
         nomad,
         swarm,
-        metric,
+        ylabel,
         xlabel,
         xtick_labels,
         figure_path
@@ -16,18 +16,22 @@ def plot_figure(
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-
     k8s_rects = ax.bar(ind, k8s, width, color='r')
-    nomad_rects = ax.bar(ind+width, nomad, width, color='g')
-    swarm_rects = ax.bar(ind+width*2, swarm, width, color='b')
+    if nomad:
+        nomad_rects = ax.bar(ind + width, nomad, width, color='g')
+    swarm_rects = ax.bar(ind + width * 2, swarm, width, color='b')
 
-    ax.set_ylabel('{0} (Median)'.format(metric))
+    legend_title = ('k8s', 'swarm')
+    if nomad:
+        legend_title = ('k8s', 'swarm', 'nomad')
+    ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
-    ax.set_xticks(ind+width)
+    ax.set_xticks(ind + width)
     ax.set_xticklabels(xtick_labels)
     ax.legend(
-        (k8s_rects[0], nomad_rects[0], swarm_rects[0]),
-        ('k8s', 'nomad', 'swarm')
+        legend_title,
+        bbox_to_anchor=(0, 1.05, 1, 0.2), loc="lower left",
+        fancybox=True, shadow=True, ncol=5, mode="expand"
     )
 
     def _auto_label(rects):
@@ -40,7 +44,8 @@ def plot_figure(
             )
 
     _auto_label(k8s_rects)
-    _auto_label(nomad_rects)
+    if nomad:
+        _auto_label(nomad_rects)
     _auto_label(swarm_rects)
 
     plt.savefig('{0}.png'.format(figure_path))

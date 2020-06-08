@@ -14,7 +14,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
-from figures import plot_figure
+from figures import plot_bar_figure
 from functions import (
     SAMPLE,
     FUNCTIONS,
@@ -805,77 +805,106 @@ def _aggregate_result(source_dir,
                     )
 
 
-def _plot_metrics(k8s, nomad, swarm, cases, description, figure_base):
+def _plot_metrics(
+        k8s,
+        nomad,
+        swarm,
+        cases,
+        description,
+        figure_base,
+        entries_size
+):
     # The size of these lists are the same
     # Since we have three metrics we are going to have 3 figures for each case
     # that represent the framework
-    response_time_k8s = []
-    response_time_nomad = []
-    response_time_swarm = []
-    throughput_k8s = []
-    throughput_nomad = []
-    throughput_swarm = []
-    success_pct_k8s = []
-    success_pct_nomad = []
-    success_pct_swarm = []
-    for index in range(len(k8s)):
-        entry_k8s = k8s[index]
-        entry_nomad = nomad[index]
-        entry_swarm = swarm[index]
+    for entry_size in range(entries_size):
+        response_time_k8s = []
+        response_time_nomad = []
+        response_time_swarm = []
+        throughput_k8s = []
+        throughput_nomad = []
+        throughput_swarm = []
+        success_pct_k8s = []
+        success_pct_nomad = []
+        success_pct_swarm = []
+        start_time = None
+        for index in range(len(k8s)):
+            entry_k8s = k8s[index]
+            entry_swarm = swarm[index]
+            if entry_k8s[entry_size].get('startTime'):
+                start_time = entry_k8s[entry_size]['startTime']
 
-        # Prepare the the data for k8s
-        response_time_k8s.append(entry_k8s['resTime'])
-        throughput_k8s.append(entry_k8s['throughput'])
-        success_pct_k8s.append(100.0 - float(entry_k8s['errorPct']))
+            if nomad:
+                entry_nomad = nomad[index]
+                # Prepare the the data for nomad
+                response_time_nomad.append(entry_nomad[entry_size]['resTime'])
+                throughput_nomad.append(entry_nomad[entry_size]['throughput'])
+                success_pct_nomad.append(
+                    100.0 - float(entry_nomad[entry_size]['errorPct'])
+                )
 
-        # Prepare the the data for nomad
-        response_time_nomad.append(entry_nomad['resTime'])
-        throughput_nomad.append(entry_nomad['throughput'])
-        success_pct_nomad.append(100.0 - float(entry_nomad['errorPct']))
+            # Prepare the the data for k8s
+            response_time_k8s.append(entry_k8s[entry_size]['resTime'])
+            throughput_k8s.append(entry_k8s[entry_size]['throughput'])
+            success_pct_k8s.append(
+                100.0 - float(entry_k8s[entry_size]['errorPct'])
+            )
 
-        # Prepare the the data for swarm
-        response_time_swarm.append(entry_swarm['resTime'])
-        throughput_swarm.append(entry_swarm['throughput'])
-        success_pct_swarm.append(100.0 - float(entry_swarm['errorPct']))
+            # Prepare the the data for swarm
+            response_time_swarm.append(entry_swarm[entry_size]['resTime'])
+            throughput_swarm.append(entry_swarm[entry_size]['throughput'])
+            success_pct_swarm.append(
+                100.0 - float(entry_swarm[entry_size]['errorPct'])
+            )
 
-    # Plot the figures for response time for all selected cases
-    plot_figure(
-        response_time_k8s,
-        response_time_nomad,
-        response_time_swarm,
-        'Response Time',
-        description,
-        cases,
-        '{0}_response'.format(figure_base)
-    )
+        # Plot the figures for response time for all selected cases
+        figure_path_response = \
+            '{0}_{1}_response'.format(figure_base, start_time)\
+                if start_time else '{0}_response'.format(figure_base)
+        figure_path_throughput = \
+            '{0}_{1}_throughput'.format(figure_base, start_time)\
+                if start_time else '{0}_throughput'.format(figure_base)
+        figure_path_success_rate = \
+            '{0}_{1}_success_rate'.format(figure_base, start_time)\
+                if start_time else '{0}_success_rate'.format(figure_base)
+        plot_bar_figure(
+            response_time_k8s,
+            response_time_nomad,
+            response_time_swarm,
+            'Response Time (Median)',
+            description,
+            cases,
+            figure_path_response
+        )
 
-    # Plot the figures for throughput for all selected cases
-    plot_figure(
-        throughput_k8s,
-        throughput_nomad,
-        throughput_swarm,
-        'Throughput',
-        description,
-        cases,
-        '{0}_throughput'.format(figure_base)
-    )
+        # Plot the figures for throughput for all selected cases
+        plot_bar_figure(
+            throughput_k8s,
+            throughput_nomad,
+            throughput_swarm,
+            'Throughput (Median)',
+            description,
+            cases,
+            figure_path_throughput
+        )
 
-    # Plot the figures for success rate for all selected cases
-    plot_figure(
-        success_pct_k8s,
-        success_pct_nomad,
-        success_pct_swarm,
-        'Success Rate',
-        description,
-        cases,
-        '{0}_success_rate'.format(figure_base)
-    )
+        # Plot the figures for success rate for all selected cases
+        plot_bar_figure(
+            success_pct_k8s,
+            success_pct_nomad,
+            success_pct_swarm,
+            'Success Rate (Median)',
+            description,
+            cases,
+            figure_path_success_rate
+        )
 
 
 def _generate_figures(source_dir, destination_dir):
     # Create the destination directory
     _create_nested_dir(destination_dir)
 
+    warm_cases = 2
     # Check if the source directory exists or not
     if not os.path.isdir(source_dir):
         raise Exception('The source directory does not exist')
@@ -891,6 +920,9 @@ def _generate_figures(source_dir, destination_dir):
             swarm = []
             for unit_case in case['cases']:
                 for framework in FRAMEWORKS:
+                    if framework == 'nomad' and function == 'warmfunction':
+                        continue
+                    entry_list = []
                     source_framework_dir = os.path.join(source_dir, framework)
                     source_function_dir = os.path.join(
                         source_framework_dir,
@@ -906,13 +938,18 @@ def _generate_figures(source_dir, destination_dir):
                     )
                     with open(source_unit_case) as csv_file:
                         data = pd.read_csv(csv_file)
-                        entry = next(data.iterrows())[1]
+                        for index, entry in data.iterrows():
+                            if index < warm_cases:
+                                entry_list.append(entry)
+                            else:
+                                break
+
                         if framework == 'k8s':
-                            k8s.append(entry)
+                            k8s.append(entry_list)
                         elif framework == 'nomad':
-                            nomad.append(entry)
+                            nomad.append(entry_list)
                         elif framework == 'swarm':
-                            swarm.append(entry)
+                            swarm.append(entry_list)
 
             figure_base = os.path.join(
                 destination_function_path,
@@ -924,7 +961,8 @@ def _generate_figures(source_dir, destination_dir):
                 swarm,
                 case['cases'],
                 case['description'],
-                figure_base
+                figure_base,
+                len(entry_list)
             )
 
 
