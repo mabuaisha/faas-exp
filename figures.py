@@ -23,7 +23,7 @@ def plot_bar_figure(
 
     legend_title = ('k8s', 'swarm')
     if nomad:
-        legend_title = ('k8s', 'swarm', 'nomad')
+        legend_title = ('k8s', 'nomad', 'swarm',)
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
     ax.set_xticks(ind + width)
