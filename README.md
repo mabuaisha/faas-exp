@@ -445,13 +445,15 @@ This part is the one responsible for conducting experiment on specified containe
 9. Make sure that your application is setup correctly by invoking `faas-exp` you should see something like this:
 
 ```
-(faas-exp) ➜  faas-exp git:(master) ✗ faas-exp
+(faas-exp) ➜  ~ faas-exp
 Usage: faas-exp [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
 
 Commands:
+  aggregate
+  generate-figures
   run
   validate
 
@@ -461,6 +463,7 @@ The `faas-exp` supports the following command:
 1. `faas-exp validate`. This command will validate that your ready to run your experiment.
 2. `faas-exp run -c config.yaml`. This command will start running actual experiment.
 3. `faas-exp aggregate -s SOURCE_RESULT_DIR -d DESTINATION_RESULT_DIR -e [FUNCTION_NAME]`
+4. `faas-exp generate-figures -s SOURCE_AGGREGATE_RESULT_DIR DESTINATION_FIGURE_DIR` 
 
 ### Configuration
 
