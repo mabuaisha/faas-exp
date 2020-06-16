@@ -683,6 +683,9 @@ def _aggregate_summaries_and_statistic(
 
             num = int(entry['elapsed'])
             response_code = entry['responseCode']
+            if not isinstance(response_code, int):
+                if response_code.isnumeric():
+                    response_code = int(response_code)
             if response_code == 200:
                 status_code_200 += 1
 
@@ -691,6 +694,9 @@ def _aggregate_summaries_and_statistic(
             metrics['resTime'].append(num)
 
     throughput = _calculate_throughput(start_date, end_date, status_code_200)
+    print('Number Of Response Code 200 is {}'.format(status_code_200))
+    print('throughput is {}'.format(throughput))
+    print('Test Case path file {}'.format(target_summary_path))
     metrics['throughput'].append(throughput)
 
 
@@ -742,6 +748,7 @@ def _parse_test_cases_results(
                 run_num,
             )
         else:
+            logger.info('This is the run # {}'.format(run_num))
             # Aggregate summaries and statistic
             _aggregate_summaries_and_statistic(
                 path,
@@ -756,7 +763,7 @@ def _parse_test_cases_results(
             # Get the median result for response time
             median_result = median(warm_metrics['resTime'])
             # Get the median result for throughput
-            print(warm_case, warm_metrics['throughput'])
+            logger.info(warm_case, warm_metrics['throughput'])
             throughput_result = median(warm_metrics['throughput'])
             error_pct_result = median(warm_metrics['errorPct'])
             headers.append([
@@ -766,6 +773,9 @@ def _parse_test_cases_results(
                 error_pct_result
             ])
     else:
+        logger.info(
+            'The values of throughput are {}'.format(metrics['throughput'])
+        )
         # Get the median result for response time
         median_result = median(metrics['resTime'])
         # Get the median result for throughput
