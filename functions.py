@@ -34,7 +34,7 @@ CASES = [
     },
     {
         'type': 'parallel/noautoscaling',
-        'description': 'Parallel Non Auto Scaling (Replicas)',
+        'description': 'Parallel None Auto Scaling (Replicas)',
         'cases': [
             'replica1',
             'replica10',
@@ -61,7 +61,7 @@ CASES = [
     },
     {
         'type': 'sequential/noautoscaling',
-        'description': 'Sequential Non Auto Scaling (Replicas)',
+        'description': 'Sequential None Auto Scaling (Replicas)',
         'cases': [
             'replica1',
             'replica10',
