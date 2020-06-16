@@ -672,6 +672,8 @@ def _aggregate_summaries_and_statistic(
     status_code_200 = 0
     start_date = ''
     end_date = ''
+    if 'resTime' not in metrics:
+        metrics['resTime'] = []
     with open(target_summary_path) as csv_file:
         data = pd.read_csv(csv_file)
         last_entry = len(data) - 1
@@ -688,15 +690,12 @@ def _aggregate_summaries_and_statistic(
                     response_code = int(response_code)
             if response_code == 200:
                 status_code_200 += 1
-
-            if 'resTime' not in metrics:
-                metrics['resTime'] = []
-            metrics['resTime'].append(num)
+                metrics['resTime'].append(num)
 
     throughput = _calculate_throughput(start_date, end_date, status_code_200)
-    print('Number Of Response Code 200 is {}'.format(status_code_200))
-    print('throughput is {}'.format(throughput))
-    print('Test Case path file {}'.format(target_summary_path))
+    logger.info('Number Of Response Code 200 is {0}'.format(status_code_200))
+    logger.info('throughput is {0}'.format(throughput))
+    logger.info('Test Case path file {0}'.format(target_summary_path))
     metrics['throughput'].append(throughput)
 
 
@@ -774,7 +773,7 @@ def _parse_test_cases_results(
             ])
     else:
         logger.info(
-            'The values of throughput are {}'.format(metrics['throughput'])
+            'The values of throughput are {0}'.format(metrics['throughput'])
         )
         # Get the median result for response time
         median_result = median(metrics['resTime'])
