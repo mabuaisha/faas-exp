@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import datetime
 import csv
 import json
 import logging
@@ -601,6 +602,34 @@ def _is_warm_function(function_name):
     return True if function_name == 'warmfunction' else False
 
 
+def _calculate_throughput(start_date, end_date, status_codes_200):
+    # the start & end date passed by are millisecond unix timestamp
+    # which need to be converted
+    seconds_dt1, millisecond_dt1 = divmod(int(start_date), 1000)
+    seconds_dt2, millisecond_dt2 = divmod(int(end_date), 1000)
+
+    start_date = '{0}.{1}'.format(
+        time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(seconds_dt1)),
+        millisecond_dt1
+    )
+    end_date = '{0}.{1}'.format(
+        time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(seconds_dt2)),
+        millisecond_dt2
+    )
+
+    start_date = datetime.datetime.strptime(
+        start_date, '%Y-%m-%d %H:%M:%S.%f'
+    )
+
+    end_date = datetime.datetime.strptime(
+        end_date, '%Y-%m-%d %H:%M:%S.%f'
+    )
+    diff = end_date - start_date
+    total_time = diff.seconds + diff.microseconds / 1000000
+    throughput = float(int(status_codes_200) / total_time)
+    return throughput
+
+
 def _aggregate_warm_data(
         path,
         dir_case_path,
@@ -638,17 +667,31 @@ def _aggregate_summaries_and_statistic(
     with open(target_statistic_path) as stat_path:
         result = json.load(stat_path)
         total_result = result['Total']
-        for metric in metrics:
-            if metric != 'resTime':
-                metrics[metric].append(total_result[metric])
+        metrics['errorPct'].append(total_result['errorPct'])
 
+    status_code_200 = 0
+    start_date = ''
+    end_date = ''
     with open(target_summary_path) as csv_file:
         data = pd.read_csv(csv_file)
-        for _, entry in data.iterrows():
+        last_entry = len(data) - 1
+        for index, entry in data.iterrows():
+            if index == 0:
+                start_date = int(entry['timeStamp'])
+            elif index == last_entry:
+                end_date = int(entry['timeStamp'])
+
             num = int(entry['elapsed'])
+            response_code = entry['responseCode']
+            if response_code == 200:
+                status_code_200 += 1
+
             if 'resTime' not in metrics:
                 metrics['resTime'] = []
             metrics['resTime'].append(num)
+
+    throughput = _calculate_throughput(start_date, end_date, status_code_200)
+    metrics['throughput'].append(throughput)
 
 
 def _parse_test_cases_results(
@@ -713,6 +756,7 @@ def _parse_test_cases_results(
             # Get the median result for response time
             median_result = median(warm_metrics['resTime'])
             # Get the median result for throughput
+            print(warm_case, warm_metrics['throughput'])
             throughput_result = median(warm_metrics['throughput'])
             error_pct_result = median(warm_metrics['errorPct'])
             headers.append([
