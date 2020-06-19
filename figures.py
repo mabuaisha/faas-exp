@@ -19,7 +19,11 @@ def plot_bar_figure(
     k8s_rects = ax.bar(ind, k8s, width, color='r')
     if nomad:
         nomad_rects = ax.bar(ind + width, nomad, width, color='g')
-    swarm_rects = ax.bar(ind + width * 2, swarm, width, color='b')
+
+    bar_width = ind + width * 2
+    if swarm and not nomad:
+        bar_width = ind + width
+    swarm_rects = ax.bar(bar_width, swarm, width, color='b')
 
     legend_title = ('k8s', 'swarm')
     if nomad:
