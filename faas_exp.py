@@ -52,6 +52,16 @@ JMETER_DIR = os.path.join(BASE_DIR, 'jmeter')
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 FIGURES_DIR = os.path.join(BASE_DIR, 'figures')
 
+CASES_DESC = {
+    'replica1': '1',
+    'replica10': '10',
+    'replica20': '20',
+    'user_5': '5',
+    'user_10': '10',
+    'user_20': '20',
+    'user_50': '50'
+}
+
 
 def _is_cold_start_enabled(function):
     return True if \
@@ -870,6 +880,7 @@ def _plot_metrics(
     # The size of these lists are the same
     # Since we have three metrics we are going to have 3 figures for each case
     # that represent the framework
+    cases = [CASES_DESC[item] for item in cases]
     for entry_size in range(entries_size):
         response_time_k8s = []
         response_time_nomad = []
@@ -957,7 +968,7 @@ def _generate_figures(source_dir, destination_dir):
     # Create the destination directory
     _create_nested_dir(destination_dir)
 
-    warm_cases = 2
+    warm_cases = 6
     # Check if the source directory exists or not
     if not os.path.isdir(source_dir):
         raise Exception('The source directory does not exist')
