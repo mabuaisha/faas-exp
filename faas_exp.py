@@ -12,6 +12,7 @@ from pathlib import Path
 import click
 import requests
 import pandas as pd
+import numpy as np
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -61,6 +62,37 @@ CASES_DESC = {
     'user_20': '20',
     'user_50': '50'
 }
+
+
+def _get_iqr_limits(_dataset):
+    q1 = np.percentile(_dataset, 25, interpolation='midpoint')
+    q3 = np.percentile(_dataset, 75, interpolation='midpoint')
+    iqr = q3 - q1
+    print('IQR is {0}'.format(iqr))
+    if iqr == 0.0:
+        return 0, 0
+
+    lower_limit = q1 - (1.5 * iqr)
+    upper_limit = q3 + (1.5 * iqr)
+    print('Lower Limit is {0}'.format(lower_limit))
+    print('Upper Limit is {0}'.format(upper_limit))
+    return lower_limit, upper_limit
+
+
+def _remove_outliers_from_dataset(_dataset):
+    _updated_dataset = []
+    outliers = []
+    lower_limit, upper_limit = _get_iqr_limits(_dataset)
+    if lower_limit == 0 and upper_limit == 0:
+        return _dataset
+    for x in _dataset:
+        if lower_limit < x < upper_limit:
+            _updated_dataset.append(x)
+        else:
+            outliers.append(x)
+    if not _updated_dataset:
+        print('All datasets are outliers :P:P:P')
+    return _updated_dataset
 
 
 def _is_cold_start_enabled(function):
@@ -770,10 +802,15 @@ def _parse_test_cases_results(
     if _is_warm_function(function):
         for warm_case, warm_metrics in warm_cases.items():
             # Get the median result for response time
-            median_result = median(warm_metrics['resTime'])
+            response_time_data = _remove_outliers_from_dataset(
+                warm_metrics['resTime']
+            )
+            median_result = median(response_time_data)
             # Get the median result for throughput
-            logger.info(warm_case, warm_metrics['throughput'])
-            throughput_result = median(warm_metrics['throughput'])
+            throughput_data = _remove_outliers_from_dataset(
+                warm_metrics['throughput']
+            )
+            throughput_result = median(throughput_data)
             error_pct_result = median(warm_metrics['errorPct'])
             headers.append([
                 warm_case,
@@ -782,15 +819,13 @@ def _parse_test_cases_results(
                 error_pct_result
             ])
     else:
-        logger.info(
-            'The values of throughput are {0}'.format(metrics['throughput'])
-        )
         # Get the median result for response time
-        median_result = median(metrics['resTime'])
+        response_time_data = _remove_outliers_from_dataset(metrics['resTime'])
+        median_result = median(response_time_data)
         # Get the median result for throughput
-        throughput_result = median(metrics['throughput'])
+        throughput_data = _remove_outliers_from_dataset(metrics['throughput'])
+        throughput_result = median(throughput_data)
         error_pct_result = median(metrics['errorPct'])
-
         headers.append([median_result, throughput_result, error_pct_result])
 
 
