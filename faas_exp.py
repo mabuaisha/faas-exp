@@ -21,7 +21,10 @@ from functions import (
     SAMPLE,
     FUNCTIONS,
     FRAMEWORKS,
-    CASES
+    CASES,
+    SUMMARY,
+    MEDIAN_ACTION,
+    SUMMARY_ACTION
 )
 
 # Prepare Config
@@ -690,32 +693,19 @@ def _aggregate_warm_data(
         )
 
 
-def _aggregate_summaries_and_statistic(
-        path,
-        dir_case_path,
-        metrics,
-        run_num
-):
-    # The target file
-    path_to_summary = path['summary'].format(index=run_num)
-    path_to_statistic = path['statistic'].format(index=run_num)
-    target_summary_path = os.path.join(
-        dir_case_path, path_to_summary
-    )
-    target_statistic_path = os.path.join(
-        dir_case_path, path_to_statistic
-    )
-
+def _read_error_pct_from_statistic(target_statistic_path):
     with open(target_statistic_path) as stat_path:
         result = json.load(stat_path)
-        total_result = result['Total']
-        metrics['errorPct'].append(total_result['errorPct'])
+        total_result = result['Total']['errorPct']
 
+    return total_result
+
+
+def _read_from_summary_file(target_summary_path):
     status_code_200 = 0
     start_date = ''
     end_date = ''
-    if 'resTime' not in metrics:
-        metrics['resTime'] = []
+    restime_list = []
     with open(target_summary_path) as csv_file:
         data = pd.read_csv(csv_file)
         last_entry = len(data) - 1
@@ -732,11 +722,57 @@ def _aggregate_summaries_and_statistic(
                     response_code = int(response_code)
             if response_code == 200:
                 status_code_200 += 1
-                metrics['resTime'].append(num)
+                restime_list.append(num)
 
-    throughput = _calculate_throughput(start_date, end_date, status_code_200)
-    logger.info('Number Of Response Code 200 is {0}'.format(status_code_200))
-    logger.info('throughput is {0}'.format(throughput))
+    summary_result = {
+        '2x_response_times': restime_list,
+        'start_date': start_date,
+        'end_date': end_date,
+        'status_code_200': status_code_200
+
+    }
+    return summary_result
+
+
+def _get_summary_and_statistic_per_run(path, dir_case_path, run_num):
+    # The target file
+    path_to_summary = path['summary'].format(index=run_num)
+    path_to_statistic = path['statistic'].format(index=run_num)
+    target_summary_path = os.path.join(
+        dir_case_path, path_to_summary
+    )
+    target_statistic_path = os.path.join(
+        dir_case_path, path_to_statistic
+    )
+    return target_summary_path, target_statistic_path
+
+
+def _aggregate_summaries_and_statistic(
+        path,
+        dir_case_path,
+        metrics,
+        run_num
+):
+
+    target_summary_path, target_statistic_path = \
+        _get_summary_and_statistic_per_run(
+            path, dir_case_path, run_num
+        )
+
+    metrics['errorPct'].append(_read_error_pct_from_statistic(
+        target_statistic_path
+    ))
+
+    if 'resTime' not in metrics:
+        metrics['resTime'] = []
+    summary_result = _read_from_summary_file(target_summary_path)
+    metrics['resTime'].append(summary_result['2x_response_times'])
+
+    throughput = _calculate_throughput(
+        summary_result['start_date'],
+        summary_result['end_date'],
+        summary_result['status_code_200']
+    )
     logger.info('Test Case path file {0}'.format(target_summary_path))
     metrics['throughput'].append(throughput)
 
@@ -856,9 +892,108 @@ def _calculate_results(function,
                 writer.writerow(row)
 
 
+def _generate_median_results(function,
+                             function_src_path,
+                             case,
+                             dir_to_create):
+    dir_list = dir_to_create.rsplit('/', 2)
+    dir_type = '{0}/{1}'.format(dir_list[1], dir_list[2])
+    if case.get('type') == dir_type:
+        dir_case_path = os.path.join(function_src_path, dir_type)
+        _calculate_results(
+            function,
+            case,
+            dir_case_path,
+            dir_to_create,
+        )
+
+
+def _aggregate_factor_results_for_framework_per_run(
+        target_summary_path,
+        target_statistic_path,
+        factor
+):
+    if factor in ['resTime', 'throughput']:
+        summary_result = _read_from_summary_file(
+            target_summary_path
+        )
+        if factor == 'throughput':
+            factor_value = _calculate_throughput(
+                summary_result['start_date'],
+                summary_result['end_date'],
+                summary_result['status_code_200']
+            )
+        elif factor == 'resTime':
+            factor_value = median(
+                summary_result['2x_response_times']
+            )
+    elif factor == 'errorPct':
+        factor_value = _read_error_pct_from_statistic(
+            target_statistic_path
+        )
+
+    return factor_value
+
+
+def _generate_summary_results(function,
+                              source_dir,
+                              case,
+                              dir_to_create):
+    dir_list = dir_to_create.rsplit('/', 2)
+    dir_type = '{0}/{1}'.format(dir_list[1], dir_list[2])
+    if case.get('type') == dir_type:
+        for path in case.get('paths'):
+            pre_header = ()
+            headers = [pre_header + SUMMARY]
+            csv.register_dialect(
+                'path_dialect',
+                quoting=csv.QUOTE_NONNUMERIC,
+                skipinitialspace=True
+            )
+            for factor in SAMPLE:
+                for framework in FRAMEWORKS:
+                    is_warm = _is_warm_function(function)
+                    if is_warm and framework == 'nomad':
+                        continue
+                    framework_src_path = os.path.join(
+                        source_dir, framework)
+                    function_src_path = os.path.join(
+                        framework_src_path, function)
+                    dir_case_path = os.path.join(function_src_path, dir_type)
+                    if is_warm:
+                        pre_header += ('startTime',)
+
+                    for index in range(6):
+                        run_num = index + 1
+                        target_summary_path, target_statistic_path = \
+                            _get_summary_and_statistic_per_run(
+                                path, dir_case_path, run_num
+                            )
+                        factor_value = \
+                            _aggregate_factor_results_for_framework_per_run(
+                                target_summary_path,
+                                target_statistic_path,
+                                factor
+                            )
+                        headers.append([
+                            framework,
+                            run_num,
+                            factor,
+                            factor_value
+                        ])
+
+                    case_id = path['summary'].split('/')[0]
+                    function_result = os.path.join(dir_to_create, case_id)
+                    with open('{0}.csv'.format(function_result), 'w') as f:
+                        writer = csv.writer(f, dialect='path_dialect')
+                        for row in headers:
+                            writer.writerow(row)
+
+
 def _aggregate_result(source_dir,
                       destination_dir,
-                      exclude_function=None):
+                      action=MEDIAN_ACTION,
+                      exclude_function=None,):
     exclude_function = exclude_function or []
     # Create the destination directory
     _create_nested_dir(destination_dir)
@@ -890,16 +1025,27 @@ def _aggregate_result(source_dir,
             _create_nested_dir(dir_to_create)
 
             for case in CASES:
-                dir_list = dir_to_create.rsplit('/', 2)
-                dir_type = '{0}/{1}'.format(dir_list[1], dir_list[2])
-                if case.get('type') == dir_type:
+                # dir_to_create
+                # function
+                # case
+                # function_src_path = source_dir + function
+                if action == MEDIAN_ACTION:
                     function_src_path = os.path.join(source_dir, function)
-                    dir_case_path = os.path.join(function_src_path, dir_type)
-                    _calculate_results(
+                    _generate_median_results(
                         function,
+                        function_src_path,
                         case,
-                        dir_case_path,
-                        dir_to_create,
+                        dir_to_create
+                    )
+                elif action == SUMMARY_ACTION:
+                    # We need to aggregate all factors for all frameworks
+                    # for each single case as a single file that contains all
+                    # the iteration runs
+                    _generate_summary_results(
+                        function,
+                        source_dir,
+                        case,
+                        dir_to_create
                     )
 
 

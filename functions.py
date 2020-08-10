@@ -111,3 +111,13 @@ FRAMEWORKS = (
     'nomad',
     'swarm'
 )
+SUMMARY = (
+    'framework',
+    'runNumber',
+    'factor',
+    'factorValue'
+)
+
+MEDIAN_ACTION = 'median'
+SUMMARY_ACTION = 'summary'
+
