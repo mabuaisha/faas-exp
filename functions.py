@@ -128,4 +128,4 @@ WARMS = (
 
 MEDIAN_ACTION = 'median'
 SUMMARY_ACTION = 'summary'
-
+WILCOXON_ACTION = 'wilcoxon'

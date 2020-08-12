@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 import subprocess
+import io
 from statistics import median
 from pathlib import Path
 
@@ -13,6 +14,7 @@ import click
 import requests
 import pandas as pd
 import numpy as np
+from scipy.stats import mannwhitneyu
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -25,6 +27,7 @@ from functions import (
     SUMMARY,
     MEDIAN_ACTION,
     SUMMARY_ACTION,
+    WILCOXON_ACTION,
     WARMS
 )
 
@@ -57,6 +60,7 @@ JMETER_DIR = os.path.join(BASE_DIR, 'jmeter')
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 FIGURES_DIR = os.path.join(BASE_DIR, 'figures')
 SUMMARY_DIR = os.path.join(BASE_DIR, 'summary')
+WILCOXON_DIR = os.path.join(BASE_DIR, 'wilcoxon')
 
 CASES_DESC = {
     'replica1': '1',
@@ -1108,6 +1112,8 @@ def _aggregate_result(source_dir,
                     logger.info('Finished generation case {0} summary'
                                 ' for function {1} successfully'
                                 ''.format(case['type'], function))
+                elif action == WILCOXON_ACTION:
+                    function_src_path = os.path.join(source_dir, function)
 
 
 def _plot_metrics(
@@ -1272,6 +1278,153 @@ def _generate_figures(source_dir, destination_dir):
             )
 
 
+# Use the same method created on Jmetal project https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L484 #NOQA
+def _wilcoxon_to_latex(df, caption, label, minimization=True, alignment='c'):
+    """ Convert a pandas DataFrame to a LaTeX tabular.
+    Prints labels in bold and does use math mode.
+
+    :param df: Pandas dataframe.
+    :param caption: LaTeX table caption.
+    :param label: LaTeX table label.
+    :param minimization: If indicator is minimization,
+     highlight the best values of mean/median; else, the lowest.
+    """
+    num_columns, num_rows = df.shape[1], df.shape[0]
+    output = io.StringIO()
+
+    col_format = '{}|{}'.format(alignment, alignment * num_columns)
+    column_labels = ['\\textbf{{{0}}}' \
+                     ''.format(label.replace('_', '\\_'))
+                     for label in df.columns]
+
+    # Write header
+    output.write('\\documentclass{article}\n')
+
+    output.write('\\usepackage[utf8]{inputenc}\n')
+    output.write('\\usepackage{tabularx}\n')
+    output.write('\\usepackage{amssymb}\n')
+    output.write('\\usepackage{amsmath}\n')
+
+    output.write('\\title{Wilcoxon - Mann-Whitney rank sum test}\n')
+    output.write('\\author{}\n')
+
+    output.write('\\begin{document}\n')
+    output.write('\\maketitle\n')
+
+    output.write('\\section{Table}\n')
+
+    output.write('\\begin{table}[!htp]\n')
+    output.write('  \\caption{{{}}}\n'.format(caption))
+    output.write('  \\label{{{}}}\n'.format(label))
+    output.write('  \\centering\n')
+    output.write('  \\begin{scriptsize}\n')
+    output.write('  \\begin{tabular}{%s}\n' % col_format)
+    output.write('      & {} \\\\\\hline\n'.format(' & '.join(column_labels)))
+
+    symbolo = '\\triangledown\ '
+    symbolplus = '\\blacktriangle\ '
+
+    if not minimization:
+        symbolo, symbolplus = symbolplus, symbolo
+
+    # Write data lines
+    for i in range(num_rows):
+        values = [val.replace('-', '\\text{--}\ ').replace('o', symbolo).replace('+', symbolplus) for val in df.iloc[i]]
+        output.write('      \\textbf{{{0}}} & ${1}$ \\\\\n'.format(
+            df.index[i], ' $ & $ '.join([str(val) for val in values]))
+        )
+
+    # Write footer
+    output.write('  \\end{tabular}\n')
+    output.write('  \\end{scriptsize}\n')
+    output.write('\\end{table}\n')
+
+    output.write('\\end{document}')
+
+    return output.getvalue()
+
+
+# Use the same method created on Jmetal project https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L545 #NOQA
+def _check_minimization(factor):
+    if factor in ['resTime', 'errorPct']:
+        return True
+    else:
+        return False
+
+
+# Inspired from the jMetal Project Source code
+# https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L295 #NOQA
+def _compute_wilcoxon(filename, output_dir):
+    """
+    :param filename: Input filename (summary).
+    :param output_dir: Output path.
+    """
+    df = pd.read_csv(filename, skipinitialspace=True)
+    frameworks = pd.unique(df['framework'])
+    factors = pd.unique(df['factor'])
+
+    table = pd.DataFrame(index=frameworks[0:-1], columns=frameworks[1:])
+
+    for factor in factors:
+        logger.info(factor)
+        for i, row_framework in enumerate(frameworks[0:-1]):
+            wilcoxon = []
+            for j, col_framework in enumerate(frameworks[1:]):
+                line = []
+
+                if i <= j:
+                    df1 = df[(df["framework"] == row_framework)
+                             & (df["factor"] == factor)]
+                    df2 = df[(df["framework"] == col_framework)
+                             & (df["factor"] == factor)]
+
+                    data1 = df1["factorValue"]
+                    data2 = df2["factorValue"]
+
+                    median1 = median(data1)
+                    median2 = median(data2)
+
+                    stat, p = mannwhitneyu(data1, data2)
+
+                    if p <= 0.05:
+                        if _check_minimization(factor):
+                            if median1 <= median2:
+                                line.append('+')
+                            else:
+                                line.append('o')
+                        else:
+                            if median1 >= median2:
+                                line.append('+')
+                            else:
+                                line.append('o')
+                    else:
+                        line.append('-')
+                    wilcoxon.append(''.join(line))
+
+            if len(wilcoxon) < len(frameworks):
+                wilcoxon = [''] * (
+                        len(frameworks) - len(wilcoxon) - 1) + wilcoxon
+            table.loc[row_framework] = wilcoxon
+
+        table.to_csv(os.path.join(
+            output_dir, 'Wilcoxon-{}.csv'.format(factor)),
+            sep='\t', encoding='utf-8'
+        )
+
+        with open(os.path.join(
+                output_dir, 'Wilcoxon-{}.tex'.format(factor)),
+                'w') as latex:
+            latex.write(
+                _wilcoxon_to_latex(
+                    table,
+                    caption='Wilcoxon values of the'
+                            ' {} factor'
+                            ''.format(factor),
+                    label='table:{}'.format(factor)
+                )
+            )
+
+
 @click.group()
 def main():
     pass
@@ -1340,6 +1493,22 @@ def prepare_for_statistics(source_dir, destination_dir):
 
 
 @click.command()
+@click.option('-s',
+              '--source-dir',
+              required=True)
+@click.option('-d',
+              '--destination-dir',
+              default=WILCOXON_DIR,
+              required=False)
+def compute_wilcoxon(source_dir, destination_dir):
+    _aggregate_result(
+        source_dir,
+        destination_dir,
+        action=WILCOXON_ACTION
+    )
+
+
+@click.command()
 @click.option('-c',
               '--config-file',
               required=True,
@@ -1354,3 +1523,4 @@ main.add_command(validate)
 main.add_command(aggregate)
 main.add_command(generate_figures)
 main.add_command(prepare_for_statistics)
+main.add_command(compute_wilcoxon)
