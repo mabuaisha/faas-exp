@@ -117,6 +117,14 @@ SUMMARY = (
     'factor',
     'factorValue'
 )
+WARMS = (
+    'warm_0',
+    'cold_0',
+    'warm_1',
+    'cold_1',
+    'warm_2',
+    'cold_2'
+)
 
 MEDIAN_ACTION = 'median'
 SUMMARY_ACTION = 'summary'

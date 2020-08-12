@@ -24,7 +24,8 @@ from functions import (
     CASES,
     SUMMARY,
     MEDIAN_ACTION,
-    SUMMARY_ACTION
+    SUMMARY_ACTION,
+    WARMS
 )
 
 # Prepare Config
@@ -55,6 +56,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JMETER_DIR = os.path.join(BASE_DIR, 'jmeter')
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 FIGURES_DIR = os.path.join(BASE_DIR, 'figures')
+SUMMARY_DIR = os.path.join(BASE_DIR, 'summary')
 
 CASES_DESC = {
     'replica1': '1',
@@ -675,7 +677,7 @@ def _calculate_throughput(start_date, end_date, status_codes_200):
     return throughput
 
 
-def _aggregate_warm_data(
+def _aggregate_warm_data_from_tests_cases(
         path,
         dir_case_path,
         warm_cases,
@@ -818,7 +820,7 @@ def _parse_test_cases_results(
     for index in range(6):
         run_num = index + 1
         if _is_warm_function(function):
-            _aggregate_warm_data(
+            _aggregate_warm_data_from_tests_cases(
                 path,
                 dir_case_path,
                 warm_cases,
@@ -935,6 +937,53 @@ def _aggregate_factor_results_for_framework_per_run(
     return factor_value
 
 
+def _populate_factor_results_per_test_case(
+        factor,
+        framework,
+        path,
+        dir_case_path,
+        run_num,
+        headers,
+        warm_case=None
+):
+    target_summary_path, target_statistic_path = \
+        _get_summary_and_statistic_per_run(
+            path, dir_case_path, run_num
+        )
+    factor_value = \
+        _aggregate_factor_results_for_framework_per_run(
+            target_summary_path,
+            target_statistic_path,
+            factor
+        )
+    run_num = run_num.split('/')[0]
+    factors = [framework, run_num, factor, factor_value]
+    if warm_case:
+        factors.insert(0, warm_case)
+    headers.append(factors)
+
+
+def _aggregate_factor_results_for_warm_tests(
+        factor,
+        framework,
+        path,
+        dir_case_path,
+        run_num,
+        headers
+):
+    for warm in WARMS:
+        _index = '{0}/{1}'.format(run_num, warm)
+        _populate_factor_results_per_test_case(
+            factor,
+            framework,
+            path,
+            dir_case_path,
+            _index,
+            headers,
+            warm_case=warm
+        )
+
+
 def _generate_summary_results(function,
                               source_dir,
                               case,
@@ -961,33 +1010,39 @@ def _generate_summary_results(function,
                         framework_src_path, function)
                     dir_case_path = os.path.join(function_src_path, dir_type)
                     if is_warm:
+                        # We need to aggregate all warms together
+                        # from all runs for all frameworks
                         pre_header += ('startTime',)
 
                     for index in range(6):
                         run_num = index + 1
-                        target_summary_path, target_statistic_path = \
-                            _get_summary_and_statistic_per_run(
-                                path, dir_case_path, run_num
+                        if is_warm:
+                            _aggregate_factor_results_for_warm_tests(
+                                factor,
+                                framework,
+                                path,
+                                dir_case_path,
+                                run_num,
+                                headers
                             )
-                        factor_value = \
-                            _aggregate_factor_results_for_framework_per_run(
-                                target_summary_path,
-                                target_statistic_path,
-                                factor
+                        else:
+                            _populate_factor_results_per_test_case(
+                                factor,
+                                framework,
+                                path,
+                                dir_case_path,
+                                run_num,
+                                headers
                             )
-                        headers.append([
-                            framework,
-                            run_num,
-                            factor,
-                            factor_value
-                        ])
 
-                    case_id = path['summary'].split('/')[0]
-                    function_result = os.path.join(dir_to_create, case_id)
-                    with open('{0}.csv'.format(function_result), 'w') as f:
-                        writer = csv.writer(f, dialect='path_dialect')
-                        for row in headers:
-                            writer.writerow(row)
+            case_id = path['summary'].split('/')[0]
+            function_result = os.path.join(dir_to_create, case_id)
+            with open('{0}.csv'.format(function_result), 'w') as f:
+                writer = csv.writer(f, dialect='path_dialect')
+                for row in headers:
+                    writer.writerow(row)
+            logger.info('Finished dumping summary result to {0}'
+                        ''.format('{0}.csv'.format(function_result)))
 
 
 def _aggregate_result(source_dir,
@@ -1041,12 +1096,18 @@ def _aggregate_result(source_dir,
                     # We need to aggregate all factors for all frameworks
                     # for each single case as a single file that contains all
                     # the iteration runs
+                    logger.info('Start generation case {0} summary'
+                                ' for function {1}'
+                                ''.format(case['type'], function))
                     _generate_summary_results(
                         function,
                         source_dir,
                         case,
                         dir_to_create
                     )
+                    logger.info('Finished generation case {0} summary'
+                                ' for function {1} successfully'
+                                ''.format(case['type'], function))
 
 
 def _plot_metrics(
@@ -1263,6 +1324,22 @@ def aggregate(source_dir, destination_dir, exclude_function):
 
 
 @click.command()
+@click.option('-s',
+              '--source-dir',
+              required=True)
+@click.option('-d',
+              '--destination-dir',
+              default=SUMMARY_DIR,
+              required=False)
+def prepare_for_statistics(source_dir, destination_dir):
+    _aggregate_result(
+        source_dir,
+        destination_dir,
+        action=SUMMARY_ACTION
+    )
+
+
+@click.command()
 @click.option('-c',
               '--config-file',
               required=True,
@@ -1276,3 +1353,4 @@ main.add_command(run)
 main.add_command(validate)
 main.add_command(aggregate)
 main.add_command(generate_figures)
+main.add_command(prepare_for_statistics)
