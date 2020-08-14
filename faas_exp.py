@@ -14,7 +14,7 @@ import click
 import requests
 import pandas as pd
 import numpy as np
-from scipy.stats import mannwhitneyu
+from scipy.stats import wilcoxon as wilcoxon_cal
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -653,6 +653,232 @@ def _is_warm_function(function_name):
     return True if function_name == 'warmfunction' else False
 
 
+# Use the same method created on Jmetal project https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L484 #NOQA
+def _wilcoxon_to_latex(df, caption, label, minimization=True, alignment='c'):
+    """ Convert a pandas DataFrame to a LaTeX tabular.
+    Prints labels in bold and does use math mode.
+
+    :param df: Pandas dataframe.
+    :param caption: LaTeX table caption.
+    :param label: LaTeX table label.
+    :param minimization: If indicator is minimization,
+     highlight the best values of mean/median; else, the lowest.
+    """
+    num_columns, num_rows = df.shape[1], df.shape[0]
+    output = io.StringIO()
+
+    col_format = '{}|{}'.format(alignment, alignment * num_columns)
+    column_labels = ['\\textbf{{{0}}}' \
+                     ''.format(label.replace('_', '\\_'))
+                     for label in df.columns]
+
+    # Write header
+    output.write('\\documentclass{article}\n')
+
+    output.write('\\usepackage[utf8]{inputenc}\n')
+    output.write('\\usepackage{tabularx}\n')
+    output.write('\\usepackage{amssymb}\n')
+    output.write('\\usepackage{amsmath}\n')
+
+    output.write('\\title{Wilcoxon - Mann-Whitney rank sum test}\n')
+    output.write('\\author{}\n')
+
+    output.write('\\begin{document}\n')
+    output.write('\\maketitle\n')
+
+    output.write('\\section{Table}\n')
+
+    output.write('\\begin{table}[!htp]\n')
+    output.write('  \\caption{{{}}}\n'.format(caption))
+    output.write('  \\label{{{}}}\n'.format(label))
+    output.write('  \\centering\n')
+    output.write('  \\begin{scriptsize}\n')
+    output.write('  \\begin{tabular}{%s}\n' % col_format)
+    output.write('      & {} \\\\\\hline\n'.format(' & '.join(column_labels)))
+
+    symbolo = '\\triangledown\ '
+    symbolplus = '\\blacktriangle\ '
+
+    if not minimization:
+        symbolo, symbolplus = symbolplus, symbolo
+
+    # Write data lines
+    for i in range(num_rows):
+        values = [val.replace('-', '\\text{--}\ ').replace('o', symbolo).replace('+', symbolplus) for val in df.iloc[i]]
+        output.write('      \\textbf{{{0}}} & ${1}$ \\\\\n'.format(
+            df.index[i], ' $ & $ '.join([str(val) for val in values]))
+        )
+
+    # Write footer
+    output.write('  \\end{tabular}\n')
+    output.write('  \\end{scriptsize}\n')
+    output.write('\\end{table}\n')
+
+    output.write('\\end{document}')
+
+    return output.getvalue()
+
+
+# Use the same method created on Jmetal project https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L545 #NOQA
+def _check_minimization(factor):
+    if factor in ['resTime', 'errorPct']:
+        return True
+    else:
+        return False
+
+
+def _update_dataframe_for_warm_cases(filename):
+    df = pd.read_csv(filename, skipinitialspace=True)
+    data = []
+    for framework in FRAMEWORKS:
+        for factor in SAMPLE:
+            for warm_case in ['warm', 'cold']:
+                df1 = df[
+                    (df["framework"] == framework)
+                    & (df["startTime"].str.contains(warm_case))
+                    & (df["factor"] == factor)
+                    ]
+                # Aggregate All warm use cases
+                df1['startTime'] = warm_case
+                data.append(df1)
+
+    df = pd.concat(data)
+    return df
+
+
+def _dump_latext_and_csv_per_factor(factor, table, output_dir):
+    table.to_csv(os.path.join(
+        output_dir, 'Wilcoxon-{}.csv'.format(factor)),
+        sep='\t', encoding='utf-8'
+    )
+
+    with open(os.path.join(
+            output_dir, 'Wilcoxon-{}.tex'.format(factor)),
+            'w') as latex:
+        latex.write(
+            _wilcoxon_to_latex(
+                table,
+                caption='Wilcoxon values of the'
+                        ' {} factor'
+                        ''.format(factor),
+                label='table:{}'.format(factor)
+            )
+        )
+
+
+def _apply_wilcoxon_cal_on_data(factor, df1, df2):
+    data1 = df1["factorValue"]
+    data2 = df2["factorValue"]
+    median1 = median(data1)
+    median2 = median(data2)
+    if median1 == median2:
+        effect = '({p})'.format(p='NA')
+    else:
+        stat, p = wilcoxon_cal(data1, data2)
+        p = round(p, 3)
+
+        if p <= 0.05:
+            effect = '({p})'.format(p=p)
+            # if _check_minimization(factor):
+            #     if median1 <= median2:
+            #         #effect = '({p})+'.format(p=p)
+            #         effect = '({p})'.format(p=p)
+            #     else:
+            #         effect = '({p})o'.format(p=p)
+            # else:
+            #     if median1 >= median2:
+            #         effect = '({p})+'.format(p=p)
+            #     else:
+            #         effect = '({p})o'.format(p=p)
+        else:
+            effect = '({p})'.format(p=p)
+    return effect
+
+
+def _calculate_p_values_for_all_frameworks(factor, table, frameworks, df):
+    for i, row_framework in enumerate(frameworks[0:-1]):
+        wilcoxon = []
+        for j, col_framework in enumerate(frameworks[1:]):
+            if i <= j:
+                df1 = df[(df["framework"] == row_framework)
+                         & (df["factor"] == factor)]
+                df2 = df[(df["framework"] == col_framework)
+                         & (df["factor"] == factor)]
+                effect = _apply_wilcoxon_cal_on_data(
+                    factor,
+                    df1,
+                    df2
+                )
+                wilcoxon.append(effect)
+
+        if len(wilcoxon) < len(frameworks):
+            wilcoxon = [''] * (
+                    len(frameworks) - len(wilcoxon) - 1) + wilcoxon
+        table.loc[row_framework] = wilcoxon
+
+
+def _calculate_p_values_for_warm_cases(
+        warm_cases,
+        factor,
+        table,
+        frameworks,
+        df):
+    for warm_case in warm_cases:
+        wilcoxon = []
+        df1 = df[(df["framework"] == frameworks[0])
+                 & (df["factor"] == factor)
+                 & (df["startTime"] == warm_case)]
+        df2 = df[(df["framework"] == frameworks[1])
+                 & (df["factor"] == factor)
+                 & (df["startTime"] == warm_case)]
+        effect = _apply_wilcoxon_cal_on_data(factor, df1, df2)
+        wilcoxon.append(effect)
+        # if len(wilcoxon) < len(frameworks):
+        #     wilcoxon = [''] * (
+        #             len(frameworks) - len(wilcoxon) - 1) + wilcoxon
+        table.loc[warm_case] = wilcoxon
+
+
+# Inspired from the jMetal Project Source code
+# https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L295 #NOQA
+def _compute_wilcoxon(function, filename, output_dir):
+    """
+    :param filename: Input filename (summary).
+    :param output_dir: Output path.
+    """
+    df = pd.read_csv(filename, skipinitialspace=True)
+    warm_cases = []
+    is_warm = False
+    if _is_warm_function(function):
+        df = _update_dataframe_for_warm_cases(filename)
+        warm_cases = pd.unique(df['startTime'])
+        is_warm = True
+    frameworks = pd.unique(df['framework'])
+    factors = pd.unique(df['factor'])
+    if is_warm:
+        table = pd.DataFrame(index=warm_cases, columns=['p_value'])
+    else:
+        table = pd.DataFrame(index=frameworks[0:-1], columns=frameworks[1:])
+
+    for factor in factors:
+        if is_warm:
+            _calculate_p_values_for_warm_cases(
+                warm_cases,
+                factor,
+                table,
+                frameworks,
+                df
+            )
+        else:
+            _calculate_p_values_for_all_frameworks(
+                factor,
+                table,
+                frameworks,
+                df
+            )
+        _dump_latext_and_csv_per_factor(factor, table, output_dir)
+
+
 def _calculate_throughput(start_date, end_date, status_codes_200):
     # the start & end date passed by are millisecond unix timestamp
     # which need to be converted
@@ -997,6 +1223,10 @@ def _generate_summary_results(function,
     if case.get('type') == dir_type:
         for path in case.get('paths'):
             pre_header = ()
+            if _is_warm_function(function):
+                # We need to aggregate all warms together
+                # from all runs for all frameworks
+                pre_header += ('startTime',)
             headers = [pre_header + SUMMARY]
             csv.register_dialect(
                 'path_dialect',
@@ -1013,10 +1243,6 @@ def _generate_summary_results(function,
                     function_src_path = os.path.join(
                         framework_src_path, function)
                     dir_case_path = os.path.join(function_src_path, dir_type)
-                    if is_warm:
-                        # We need to aggregate all warms together
-                        # from all runs for all frameworks
-                        pre_header += ('startTime',)
 
                     for index in range(6):
                         run_num = index + 1
@@ -1047,6 +1273,20 @@ def _generate_summary_results(function,
                     writer.writerow(row)
             logger.info('Finished dumping summary result to {0}'
                         ''.format('{0}.csv'.format(function_result)))
+
+
+def _generate_wilcoxon_results(function, source_dir, case, dir_to_create):
+    dir_list = dir_to_create.rsplit('/', 2)
+    dir_type = '{0}/{1}'.format(dir_list[1], dir_list[2])
+    function_src_path = os.path.join(source_dir, function)
+    if case.get('type') == dir_type:
+        dir_case_path = os.path.join(function_src_path, dir_type)
+        for case_item in case.get('cases'):
+            path_to_case = os.path.join(dir_case_path, case_item)
+            path_to_case = '{}.csv'.format(path_to_case)
+            output_dir = os.path.join(dir_to_create, case_item)
+            _create_nested_dir(output_dir)
+            _compute_wilcoxon(function, path_to_case, output_dir)
 
 
 def _aggregate_result(source_dir,
@@ -1113,7 +1353,12 @@ def _aggregate_result(source_dir,
                                 ' for function {1} successfully'
                                 ''.format(case['type'], function))
                 elif action == WILCOXON_ACTION:
-                    function_src_path = os.path.join(source_dir, function)
+                    _generate_wilcoxon_results(
+                        function,
+                        source_dir,
+                        case,
+                        dir_to_create
+                    )
 
 
 def _plot_metrics(
@@ -1275,153 +1520,6 @@ def _generate_figures(source_dir, destination_dir):
                 case['description'],
                 figure_base,
                 len(entry_list)
-            )
-
-
-# Use the same method created on Jmetal project https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L484 #NOQA
-def _wilcoxon_to_latex(df, caption, label, minimization=True, alignment='c'):
-    """ Convert a pandas DataFrame to a LaTeX tabular.
-    Prints labels in bold and does use math mode.
-
-    :param df: Pandas dataframe.
-    :param caption: LaTeX table caption.
-    :param label: LaTeX table label.
-    :param minimization: If indicator is minimization,
-     highlight the best values of mean/median; else, the lowest.
-    """
-    num_columns, num_rows = df.shape[1], df.shape[0]
-    output = io.StringIO()
-
-    col_format = '{}|{}'.format(alignment, alignment * num_columns)
-    column_labels = ['\\textbf{{{0}}}' \
-                     ''.format(label.replace('_', '\\_'))
-                     for label in df.columns]
-
-    # Write header
-    output.write('\\documentclass{article}\n')
-
-    output.write('\\usepackage[utf8]{inputenc}\n')
-    output.write('\\usepackage{tabularx}\n')
-    output.write('\\usepackage{amssymb}\n')
-    output.write('\\usepackage{amsmath}\n')
-
-    output.write('\\title{Wilcoxon - Mann-Whitney rank sum test}\n')
-    output.write('\\author{}\n')
-
-    output.write('\\begin{document}\n')
-    output.write('\\maketitle\n')
-
-    output.write('\\section{Table}\n')
-
-    output.write('\\begin{table}[!htp]\n')
-    output.write('  \\caption{{{}}}\n'.format(caption))
-    output.write('  \\label{{{}}}\n'.format(label))
-    output.write('  \\centering\n')
-    output.write('  \\begin{scriptsize}\n')
-    output.write('  \\begin{tabular}{%s}\n' % col_format)
-    output.write('      & {} \\\\\\hline\n'.format(' & '.join(column_labels)))
-
-    symbolo = '\\triangledown\ '
-    symbolplus = '\\blacktriangle\ '
-
-    if not minimization:
-        symbolo, symbolplus = symbolplus, symbolo
-
-    # Write data lines
-    for i in range(num_rows):
-        values = [val.replace('-', '\\text{--}\ ').replace('o', symbolo).replace('+', symbolplus) for val in df.iloc[i]]
-        output.write('      \\textbf{{{0}}} & ${1}$ \\\\\n'.format(
-            df.index[i], ' $ & $ '.join([str(val) for val in values]))
-        )
-
-    # Write footer
-    output.write('  \\end{tabular}\n')
-    output.write('  \\end{scriptsize}\n')
-    output.write('\\end{table}\n')
-
-    output.write('\\end{document}')
-
-    return output.getvalue()
-
-
-# Use the same method created on Jmetal project https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L545 #NOQA
-def _check_minimization(factor):
-    if factor in ['resTime', 'errorPct']:
-        return True
-    else:
-        return False
-
-
-# Inspired from the jMetal Project Source code
-# https://github.com/jMetal/jMetalPy/blob/6f54940cb205df831f5498e2eac2520b331ee4fd/jmetal/lab/experiment.py#L295 #NOQA
-def _compute_wilcoxon(filename, output_dir):
-    """
-    :param filename: Input filename (summary).
-    :param output_dir: Output path.
-    """
-    df = pd.read_csv(filename, skipinitialspace=True)
-    frameworks = pd.unique(df['framework'])
-    factors = pd.unique(df['factor'])
-
-    table = pd.DataFrame(index=frameworks[0:-1], columns=frameworks[1:])
-
-    for factor in factors:
-        logger.info(factor)
-        for i, row_framework in enumerate(frameworks[0:-1]):
-            wilcoxon = []
-            for j, col_framework in enumerate(frameworks[1:]):
-                line = []
-
-                if i <= j:
-                    df1 = df[(df["framework"] == row_framework)
-                             & (df["factor"] == factor)]
-                    df2 = df[(df["framework"] == col_framework)
-                             & (df["factor"] == factor)]
-
-                    data1 = df1["factorValue"]
-                    data2 = df2["factorValue"]
-
-                    median1 = median(data1)
-                    median2 = median(data2)
-
-                    stat, p = mannwhitneyu(data1, data2)
-
-                    if p <= 0.05:
-                        if _check_minimization(factor):
-                            if median1 <= median2:
-                                line.append('+')
-                            else:
-                                line.append('o')
-                        else:
-                            if median1 >= median2:
-                                line.append('+')
-                            else:
-                                line.append('o')
-                    else:
-                        line.append('-')
-                    wilcoxon.append(''.join(line))
-
-            if len(wilcoxon) < len(frameworks):
-                wilcoxon = [''] * (
-                        len(frameworks) - len(wilcoxon) - 1) + wilcoxon
-            table.loc[row_framework] = wilcoxon
-
-        table.to_csv(os.path.join(
-            output_dir, 'Wilcoxon-{}.csv'.format(factor)),
-            sep='\t', encoding='utf-8'
-        )
-
-        with open(os.path.join(
-                output_dir, 'Wilcoxon-{}.tex'.format(factor)),
-                'w') as latex:
-            latex.write(
-                _wilcoxon_to_latex(
-                    table,
-                    caption='Wilcoxon values of the'
-                            ' {} factor'
-                            ''.format(factor),
-                    label='table:{}'.format(factor)
-                )
             )
 
 
