@@ -1168,6 +1168,7 @@ def _aggregate_factor_results_for_framework_per_run(
 
 
 def _populate_factor_results_per_test_case(
+        case_number,
         factor,
         framework,
         path,
@@ -1187,13 +1188,14 @@ def _populate_factor_results_per_test_case(
             factor
         )
     run_num = run_num.split('/')[0]
-    factors = [framework, run_num, factor, factor_value]
+    factors = [framework, run_num, case_number, factor, factor_value]
     if warm_case:
         factors.insert(0, warm_case)
     headers.append(factors)
 
 
 def _aggregate_factor_results_for_warm_tests(
+        case_number,
         factor,
         framework,
         path,
@@ -1204,6 +1206,7 @@ def _aggregate_factor_results_for_warm_tests(
     for warm in WARMS:
         _index = '{0}/{1}'.format(run_num, warm)
         _populate_factor_results_per_test_case(
+            case_number,
             factor,
             framework,
             path,
@@ -1221,18 +1224,21 @@ def _generate_summary_results(function,
     dir_list = dir_to_create.rsplit('/', 2)
     dir_type = '{0}/{1}'.format(dir_list[1], dir_list[2])
     if case.get('type') == dir_type:
+        pre_header = ()
+        if _is_warm_function(function):
+            # We need to aggregate all warms together
+            # from all runs for all frameworks
+            pre_header += ('startTime',)
+        headers = [pre_header + SUMMARY]
+        csv.register_dialect(
+            'path_dialect',
+            quoting=csv.QUOTE_NONNUMERIC,
+            skipinitialspace=True
+        )
+        case_id = case.get('case')
         for path in case.get('paths'):
-            pre_header = ()
-            if _is_warm_function(function):
-                # We need to aggregate all warms together
-                # from all runs for all frameworks
-                pre_header += ('startTime',)
-            headers = [pre_header + SUMMARY]
-            csv.register_dialect(
-                'path_dialect',
-                quoting=csv.QUOTE_NONNUMERIC,
-                skipinitialspace=True
-            )
+            case_number = path['statistic'].split('/')[0]
+            logger.info('Start processing the test case {0}'.format(case_number))
             for factor in SAMPLE:
                 for framework in FRAMEWORKS:
                     is_warm = _is_warm_function(function)
@@ -1248,31 +1254,35 @@ def _generate_summary_results(function,
                         run_num = index + 1
                         if is_warm:
                             _aggregate_factor_results_for_warm_tests(
+                                case_number,
                                 factor,
                                 framework,
                                 path,
                                 dir_case_path,
-                                run_num,
+                                str(run_num),
                                 headers
                             )
                         else:
                             _populate_factor_results_per_test_case(
+                                case_number,
                                 factor,
                                 framework,
                                 path,
                                 dir_case_path,
-                                run_num,
+                                str(run_num),
                                 headers
                             )
+            logger.info(
+                'Finish processing the test case {0}'.format(case_number))
 
-            case_id = path['summary'].split('/')[0]
-            function_result = os.path.join(dir_to_create, case_id)
-            with open('{0}.csv'.format(function_result), 'w') as f:
-                writer = csv.writer(f, dialect='path_dialect')
-                for row in headers:
-                    writer.writerow(row)
-            logger.info('Finished dumping summary result to {0}'
-                        ''.format('{0}.csv'.format(function_result)))
+        logger.info('Prepare to dump result for {0}'.format(case_id))
+        function_result = os.path.join(dir_to_create, case_id)
+        with open('{0}.csv'.format(function_result), 'w') as f:
+            writer = csv.writer(f, dialect='path_dialect')
+            for row in headers:
+                writer.writerow(row)
+        logger.info('Finished dumping summary result to {0}'
+                    ''.format('{0}.csv'.format(function_result)))
 
 
 def _generate_wilcoxon_results(function, source_dir, case, dir_to_create):

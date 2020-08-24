@@ -2,6 +2,7 @@ CASES = [
     {
         'type': 'parallel/autoscaling',
         'description': 'Parallel Auto Scaling (Users)',
+        'case': 'users',
         'cases': [
             'user_5',
             'user_10',
@@ -35,6 +36,7 @@ CASES = [
     {
         'type': 'parallel/noautoscaling',
         'description': 'Parallel None Auto Scaling (Replicas)',
+        'case': 'replicas',
         'cases': [
             'replica1',
             'replica10',
@@ -62,6 +64,7 @@ CASES = [
     {
         'type': 'sequential/noautoscaling',
         'description': 'Sequential None Auto Scaling (Replicas)',
+        'case': 'replicas',
         'cases': [
             'replica1',
             'replica10',
@@ -114,6 +117,7 @@ FRAMEWORKS = (
 SUMMARY = (
     'framework',
     'runNumber',
+    'caseNumber',
     'factor',
     'factorValue'
 )
