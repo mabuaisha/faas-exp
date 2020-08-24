@@ -776,8 +776,6 @@ def _apply_wilcoxon_cal_on_data(factor, df1, df2):
         effect = '-'
     else:
         stat, p = mannwhitneyu(data1, data2)
-        p = round(p, 3)
-
         if p <= 0.05:
             if _check_minimization(factor):
                 if median1 <= median2:
