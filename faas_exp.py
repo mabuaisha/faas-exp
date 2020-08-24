@@ -15,6 +15,7 @@ import requests
 import pandas as pd
 import numpy as np
 from scipy.stats import wilcoxon as wilcoxon_cal
+from scipy.stats import mannwhitneyu
 from jinja2 import Environment, FileSystemLoader
 
 from config import Config
@@ -772,44 +773,53 @@ def _apply_wilcoxon_cal_on_data(factor, df1, df2):
     median1 = median(data1)
     median2 = median(data2)
     if median1 == median2:
-        effect = '({p})'.format(p='NA')
+        effect = '-'
     else:
-        stat, p = wilcoxon_cal(data1, data2)
+        stat, p = mannwhitneyu(data1, data2)
         p = round(p, 3)
 
         if p <= 0.05:
-            effect = '({p})'.format(p=p)
-            # if _check_minimization(factor):
-            #     if median1 <= median2:
-            #         #effect = '({p})+'.format(p=p)
-            #         effect = '({p})'.format(p=p)
-            #     else:
-            #         effect = '({p})o'.format(p=p)
-            # else:
-            #     if median1 >= median2:
-            #         effect = '({p})+'.format(p=p)
-            #     else:
-            #         effect = '({p})o'.format(p=p)
+            if _check_minimization(factor):
+                if median1 <= median2:
+                    effect = '+'
+                else:
+                    effect = 'o'
+            else:
+                if median1 >= median2:
+                    effect = '+'
+                else:
+                    effect = 'o'
         else:
-            effect = '({p})'.format(p=p)
+            effect = '-'
     return effect
 
 
-def _calculate_p_values_for_all_frameworks(factor, table, frameworks, df):
+def _calculate_p_values_for_all_frameworks(
+        factor,
+        table,
+        frameworks,
+        case_numbers,
+        df
+):
     for i, row_framework in enumerate(frameworks[0:-1]):
         wilcoxon = []
         for j, col_framework in enumerate(frameworks[1:]):
+            line = []
             if i <= j:
-                df1 = df[(df["framework"] == row_framework)
-                         & (df["factor"] == factor)]
-                df2 = df[(df["framework"] == col_framework)
-                         & (df["factor"] == factor)]
-                effect = _apply_wilcoxon_cal_on_data(
-                    factor,
-                    df1,
-                    df2
-                )
-                wilcoxon.append(effect)
+                for case_number in case_numbers:
+                    df1 = df[(df["framework"] == row_framework)
+                             & (df["factor"] == factor)
+                             & (df["caseNumber"] == case_number)]
+                    df2 = df[(df["framework"] == col_framework)
+                             & (df["factor"] == factor)
+                             & (df["caseNumber"] == case_number)]
+                    effect = _apply_wilcoxon_cal_on_data(
+                        factor,
+                        df1,
+                        df2
+                    )
+                    line.append(effect)
+                wilcoxon.append(''.join(line))
 
         if len(wilcoxon) < len(frameworks):
             wilcoxon = [''] * (
@@ -822,20 +832,26 @@ def _calculate_p_values_for_warm_cases(
         factor,
         table,
         frameworks,
+        case_numbers,
         df):
     for warm_case in warm_cases:
         wilcoxon = []
-        df1 = df[(df["framework"] == frameworks[0])
-                 & (df["factor"] == factor)
-                 & (df["startTime"] == warm_case)]
-        df2 = df[(df["framework"] == frameworks[1])
-                 & (df["factor"] == factor)
-                 & (df["startTime"] == warm_case)]
-        effect = _apply_wilcoxon_cal_on_data(factor, df1, df2)
-        wilcoxon.append(effect)
-        # if len(wilcoxon) < len(frameworks):
-        #     wilcoxon = [''] * (
-        #             len(frameworks) - len(wilcoxon) - 1) + wilcoxon
+        line = []
+        for case_number in case_numbers:
+            df1 = df[(df["framework"] == frameworks[0])
+                     & (df["factor"] == factor)
+                     & (df["startTime"] == warm_case)
+                     & (df["caseNumber"] == case_number)]
+            df2 = df[(df["framework"] == frameworks[1])
+                     & (df["factor"] == factor)
+                     & (df["startTime"] == warm_case)
+                     & (df["caseNumber"] == case_number)]
+            effect = _apply_wilcoxon_cal_on_data(factor, df1, df2)
+            line.append(effect)
+        wilcoxon.append(''.join(line))
+        if len(wilcoxon) < len(frameworks):
+            wilcoxon = [''] * (
+                    len(frameworks) - len(wilcoxon) - 1) + wilcoxon
         table.loc[warm_case] = wilcoxon
 
 
@@ -855,6 +871,7 @@ def _compute_wilcoxon(function, filename, output_dir):
         is_warm = True
     frameworks = pd.unique(df['framework'])
     factors = pd.unique(df['factor'])
+    case_numbers = pd.unique(df['caseNumber'])
     if is_warm:
         table = pd.DataFrame(index=warm_cases, columns=['p_value'])
     else:
@@ -867,6 +884,7 @@ def _compute_wilcoxon(function, filename, output_dir):
                 factor,
                 table,
                 frameworks,
+                case_numbers,
                 df
             )
         else:
@@ -874,6 +892,7 @@ def _compute_wilcoxon(function, filename, output_dir):
                 factor,
                 table,
                 frameworks,
+                case_numbers,
                 df
             )
         _dump_latext_and_csv_per_factor(factor, table, output_dir)
@@ -1291,12 +1310,9 @@ def _generate_wilcoxon_results(function, source_dir, case, dir_to_create):
     function_src_path = os.path.join(source_dir, function)
     if case.get('type') == dir_type:
         dir_case_path = os.path.join(function_src_path, dir_type)
-        for case_item in case.get('cases'):
-            path_to_case = os.path.join(dir_case_path, case_item)
-            path_to_case = '{}.csv'.format(path_to_case)
-            output_dir = os.path.join(dir_to_create, case_item)
-            _create_nested_dir(output_dir)
-            _compute_wilcoxon(function, path_to_case, output_dir)
+        path_to_case = os.path.join(dir_case_path, case['case'])
+        path_to_case = '{}.csv'.format(path_to_case)
+        _compute_wilcoxon(function, path_to_case, dir_to_create)
 
 
 def _aggregate_result(source_dir,
