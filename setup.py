@@ -7,6 +7,7 @@ setuptools.setup(
     author='Mohammed AbuAisha',
     author_email='mabuaisha@outlook.com',
     packages=setuptools.find_packages(),
+    include_package_data=True,
     entry_points={'console_scripts': ['faas-exp = faas_exp:main']},
     install_requires=[
         'requests==2.23.0',
