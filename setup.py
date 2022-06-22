@@ -15,7 +15,7 @@ setuptools.setup(
         'ruamel.yaml==0.16.10',
         'jinja2==2.11.2',
         'matplotlib==3.2.1',
-        'numpy==1.18.5',
+        'numpy==1.22.0',
         'pandas==1.0.4',
         'scipy==1.4.1'
     ])
